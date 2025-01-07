@@ -192,14 +192,21 @@ frequency_band_dict = {
 antenna_band_references = (' BLE', ' 2.4GHz', ' 5GHz', ' 6GHz')
 
 
-def load_json(project_dir, filename, message_callback):
+def load_json(project_dir: Path, filename: str, message_callback):
     """Load JSON data from a file."""
     try:
-        with open(project_dir / filename) as json_file:
+        with open(project_dir / filename, encoding='utf-8') as json_file:
             return json.load(json_file)
-    except IOError as e:
+    except FileNotFoundError:
         print(f'{filename} not found, the project probably does not contain this data type.')
-        # print(f"Non-critical error{nl}{filename}: {e}")
+        return None
+    except UnicodeDecodeError as e:
+        print(f"Error decoding {filename}: {e}")
+        message_callback(f"Error decoding {filename}: {e}")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON in {filename}: {e}")
+        message_callback(f"Error parsing JSON in {filename}: {e}")
         return None
 
 
