@@ -320,6 +320,9 @@ class MyFrame(wx.Frame):
         self.exit_button.Bind(wx.EVT_BUTTON, self.on_exit)
 
     def setup_text_input_boxes(self):
+        # Create a text input box for rename function start number
+        self.rename_start_number_text_box = wx.TextCtrl(self.tab1, value="1", style=wx.TE_PROCESS_ENTER)
+
         # Create a text input box for the AP icon size
         self.ap_icon_size_text_box = wx.TextCtrl(self.tab2, value="25", style=wx.TE_PROCESS_ENTER)
 
@@ -332,6 +335,9 @@ class MyFrame(wx.Frame):
     def setup_text_labels(self):
         # Create a text label for the drop target with custom position
         self.drop_target_label = wx.StaticText(self.panel, label="Drag and Drop files here", pos=(22, 17))
+
+        # Create a text label for the rename start number text box
+        self.rename_start_number_label = wx.StaticText(self.tab1, label="Start Number:")
 
         # Create a text label for the Create AP List function
         self.create_ap_list_label = wx.StaticText(self.tab1, label="Export to Excel:")
@@ -436,7 +442,10 @@ class MyFrame(wx.Frame):
         # Row 1
         row_sizer = wx.BoxSizer(wx.HORIZONTAL)
         row_sizer.Add(self.ap_rename_script_dropdown, 0, wx.EXPAND | wx.ALL, self.widget_margin)
+        row_sizer.Add(self.rename_start_number_label, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, self.widget_margin)
+        row_sizer.Add(self.rename_start_number_text_box, 1, wx.EXPAND | wx.ALL, self.widget_margin)
         row_sizer.Add(self.rename_aps_button, 0, wx.ALL, self.widget_margin)
+        row_sizer.AddStretchSpacer()
         self.rename_aps_sizer.Add(row_sizer, 0, wx.EXPAND | wx.LEFT, self.row_sizer_margin)
 
         # Row 2
@@ -986,15 +995,40 @@ class MyFrame(wx.Frame):
         self.project_profile_dropdown.SetSelection(self.survey_project_profile_dropdown.GetSelection())
         self.on_project_profile_dropdown_selection(event)
 
+    def get_rename_start_number(self):
+        """
+        Retrieve and validate the start number from the text box.
+        Returns:
+            int: The validated start number.
+        Raises:
+            ValueError: If the input is not a valid number.
+        """
+        start_number_str = self.rename_start_number_text_box.GetValue()
+        try:
+            return int(start_number_str)
+        except ValueError:
+            raise ValueError("Please enter a valid number for the start number.")
+
     def on_rename_aps(self, event):
         if not self.basic_checks():
             return
+
+        try:
+            # Use the helper function to get the start number
+            rename_start_number = self.get_rename_start_number()
+        except ValueError as e:
+            wx.MessageBox(str(e), "Error", wx.OK | wx.ICON_ERROR)
+            return
+
+        # Load the selected script
         selected_script = self.available_ap_rename_scripts[self.ap_rename_script_dropdown.GetSelection()]
         script_path = str(Path(__file__).resolve().parent / RENAME_APS_DIR / (selected_script + ".py"))
 
-        # Load and execute the selected script
+        # Load module from selected script
         script_module = SourceFileLoader(selected_script, script_path).load_module()
-        ap_renamer(self.working_directory, self.esx_project_name, script_module, self.append_message, self.rename_aps_boundary_separator)
+
+        # Pass the start number to the rename function
+        ap_renamer(self.working_directory, self.esx_project_name, script_module, self.append_message, self.rename_aps_boundary_separator, rename_start_number)
 
     def on_ap_rename_script_dropdown_selection(self, event):
         """Handle rename script selection change."""
@@ -1169,6 +1203,7 @@ class MyFrame(wx.Frame):
     def on_visualise_ap_renaming(self, event):
         if not self.basic_checks():
             return
+
         visualise_ap_renaming(self.working_directory, self.esx_project_name, self.append_message, self)
 
     def update_boundary_separator_value(self, value):

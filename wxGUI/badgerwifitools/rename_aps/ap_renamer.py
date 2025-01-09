@@ -14,7 +14,7 @@ from common import BOUNDARY_SEPARATION_WIDGET
 from common import RENAMED_APS_PROJECT_APPENDIX
 
 
-def ap_renamer(working_directory, project_name, script_module, message_callback, boundary_separation=None):
+def ap_renamer(working_directory, project_name, script_module, message_callback, boundary_separation=None, ap_sequence_start_number=1):
     message_callback(f'Renaming APs within project: {project_name}')
 
     floor_plans_json = load_json(working_directory / project_name, 'floorPlans.json', message_callback)
@@ -49,7 +49,7 @@ def ap_renamer(working_directory, project_name, script_module, message_callback,
         else:
             access_points_list_sorted = script_module.sort_logic(access_points_list, floor_plans_dict)
 
-        access_points_list_renamed = rename_aps(access_points_list_sorted, message_callback, floor_plans_dict)
+        access_points_list_renamed = rename_aps(access_points_list_sorted, message_callback, floor_plans_dict, ap_sequence_start_number)
 
         # Save and Move the Updated JSON
         updated_access_points_json = {'accessPoints': access_points_list_renamed}
