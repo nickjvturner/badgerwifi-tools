@@ -255,11 +255,11 @@ class MyFrame(wx.Frame):
         self.summarise_button.Bind(wx.EVT_BUTTON, self.on_summarise)
         self.summarise_button.SetToolTip(wx.ToolTip("Summarise the contents of the .esx project"))
 
-        self.export_ap_images_button = wx.Button(self.tab2, label="AP Images")
+        self.export_ap_images_button = wx.Button(self.tab3, label="AP Images")
         self.export_ap_images_button.Bind(wx.EVT_BUTTON, self.on_export_ap_images)
         self.export_ap_images_button.SetToolTip(wx.ToolTip("Images from within AP notes"))
 
-        self.export_note_images_button = wx.Button(self.tab2, label="Note Images")
+        self.export_note_images_button = wx.Button(self.tab3, label="Note Images")
         self.export_note_images_button.Bind(wx.EVT_BUTTON, self.on_export_note_images)
         self.export_note_images_button.SetToolTip(wx.ToolTip("Images from within map notes"))
 
@@ -283,9 +283,9 @@ class MyFrame(wx.Frame):
         self.create_pds_project_button.Bind(wx.EVT_BUTTON, self.on_create_pds_project)
         self.create_pds_project_button.SetToolTip(wx.ToolTip("Create a PDS project from the current .esx project"))
 
-        self.create_surveyed_ap_list_button = wx.Button(self.tab3, label="Create Surveyed AP List")
+        self.create_surveyed_ap_list_button = wx.Button(self.tab3, label="Surveyed AP List")
         self.create_surveyed_ap_list_button.Bind(wx.EVT_BUTTON, self.on_create_surveyed_ap_list)
-        self.create_surveyed_ap_list_button.SetToolTip(wx.ToolTip("Generate a dump of surveyed AP details"))
+        self.create_surveyed_ap_list_button.SetToolTip(wx.ToolTip("Dump surveyed AP detail to XLSX"))
 
         self.perform_admin_action_button = wx.Button(self.tab4, label="Perform Action")
         self.perform_admin_action_button.Bind(wx.EVT_BUTTON, self.on_perform_admin_action)
@@ -339,7 +339,7 @@ class MyFrame(wx.Frame):
         # Create a text label for the rename start number text box
         self.rename_start_number_label = wx.StaticText(self.tab1, label="Start Number:")
 
-        # Create a text label for the Create AP List function
+        # Create a text label for the Create Simulated AP List function
         self.create_ap_list_label = wx.StaticText(self.tab1, label="Export to Excel:")
 
         # Create a text label for the AP icon size
@@ -353,6 +353,9 @@ class MyFrame(wx.Frame):
         # Create a text label for the zoomed AP crop size text box
         self.zoomed_ap_crop_label = wx.StaticText(self.tab2, label="Zoomed AP Crop Size:")
         self.zoomed_ap_crop_label.SetToolTip(wx.ToolTip("Enter the size of the zoomed AP crop in pixels"))
+
+        # Create a text label for the Create Surveyed AP List function
+        self.create_surveyed_ap_list_label = wx.StaticText(self.tab3, label="Export to Excel:")
 
     def setup_panel_rows(self):
         self.button_row1_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -472,8 +475,6 @@ class MyFrame(wx.Frame):
 
         # Row 1
         row_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        row_sizer.Add(self.export_ap_images_button, 0, wx.ALL, self.widget_margin)
-        row_sizer.Add(self.export_note_images_button, 0, wx.ALL, self.widget_margin)
         row_sizer.Add(self.extract_blank_maps_button, 0, wx.ALL, self.widget_margin)
         self.export_sizer.Add(row_sizer, 0, wx.EXPAND | wx.LEFT, self.row_sizer_margin)
 
@@ -519,20 +520,28 @@ class MyFrame(wx.Frame):
         # Row 1
         row_sizer = wx.BoxSizer(wx.HORIZONTAL)
         row_sizer.Add(self.survey_project_profile_dropdown, 0, wx.EXPAND | wx.ALL, self.widget_margin)
+        row_sizer.Add(self.create_pds_project_button, 0, wx.ALL, self.widget_margin)
         self.survey_project_profile_section_sizer.Add(row_sizer, 0, wx.EXPAND | wx.LEFT, self.row_sizer_margin)
 
         # Row 2
         row_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        row_sizer.Add(self.create_pds_project_button, 0, wx.ALL, self.widget_margin)
+        row_sizer.Add(self.create_surveyed_ap_list_label, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, self.widget_margin)
+        row_sizer.Add(self.create_surveyed_ap_list_button, 0, wx.ALL, self.widget_margin)
         self.survey_project_profile_section_sizer.Add(row_sizer, 0, wx.EXPAND | wx.LEFT, self.row_sizer_margin)
 
     def setup_survey_export_section(self):
-        self.survey_export_box = wx.StaticBox(self.tab3, label="Export Survey Data")
+        self.survey_export_box = wx.StaticBox(self.tab3, label="Export")
         self.survey_export_section_sizer = wx.StaticBoxSizer(self.survey_export_box, wx.VERTICAL)
 
         # Row 1
         row_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        row_sizer.Add(self.create_surveyed_ap_list_button, 0, wx.ALL, self.widget_margin)
+
+        self.survey_export_section_sizer.Add(row_sizer, 0, wx.EXPAND | wx.LEFT, self.row_sizer_margin)
+
+        # Row 2
+        row_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        row_sizer.Add(self.export_ap_images_button, 0, wx.ALL, self.widget_margin)
+        row_sizer.Add(self.export_note_images_button, 0, wx.ALL, self.widget_margin)
         self.survey_export_section_sizer.Add(row_sizer, 0, wx.EXPAND | wx.LEFT, self.row_sizer_margin)
 
     def setup_tab4(self):
