@@ -10,7 +10,7 @@ from esx_actions.rebundle_esx import rebundle_project
 def create_pds_project_esx(self, message_callback):
     # Validate directories
     pds_maps_dir = self.working_directory / 'OUTPUT' / 'PDS AP location maps'
-    project_dir = self.working_directory / self.esx_project_name
+    project_dir = self.working_directory / self.project_name
 
     if not pds_maps_dir.exists():
         wx.CallAfter(message_callback, f"PDS maps directory not found. Run the PDS map creator first.")
@@ -31,7 +31,7 @@ def create_pds_project_esx(self, message_callback):
         temp_dir.mkdir()
 
         # Copy the project directory into the temporary directory
-        temp_project_dir = temp_dir / self.esx_project_name
+        temp_project_dir = temp_dir / self.project_name
         shutil.copytree(project_dir, temp_project_dir)
 
         wx.CallAfter(message_callback, f"Temporary duplicate project directory created:{nl}{temp_project_dir}{nl}")
@@ -66,26 +66,26 @@ def create_pds_project_esx(self, message_callback):
         wx.CallAfter(message_callback, f"")
 
         # Rebundle project from the temporary directory
-        rebundle_project(temp_dir, self.esx_project_name, self.append_message)
+        rebundle_project(temp_dir, self.project_name, self.append_message)
 
         # Rename and move the rebundled file to the working directory
         try:
-            rebundled_filename = f"{self.esx_project_name}_re-zip.esx"
+            rebundled_filename = f"{self.project_name}_re-zip.esx"
             rebundled_file = temp_dir / rebundled_filename
 
             if rebundled_file.exists():
                 # Check if the expected pattern is found in the filename
-                if re.search(r' - predictive design v(\d+\.\d+)', self.esx_project_name):
+                if re.search(r' - predictive design v(\d+\.\d+)', self.project_name):
                     # If pattern is found, apply the new naming convention
                     post_deployment_filename = re.sub(
                         r' - predictive design v(\d+\.\d+)',  # Match the version pattern
                         r' - post-deployment v0.1',  # Replace with the new pattern
-                        self.esx_project_name
+                        self.project_name
                     ) + '.esx'
                 else:
                     # If pattern is not found, leave the rebundled filename unchanged
                     wx.CallAfter(message_callback, f"'predictive design vx.x' pattern NOT found in source filename")
-                    post_deployment_filename = f"{self.esx_project_name}_re-zip.esx"
+                    post_deployment_filename = f"{self.project_name}_re-zip.esx"
 
                 destination_path = self.working_directory / post_deployment_filename
 

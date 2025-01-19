@@ -101,16 +101,14 @@ class MyFrame(wx.Frame):
             self.row_sizer_margin = -5
 
     def initialize_variables(self):
-        self.esx_project_unpacked = False
-        self.working_directory = None
         self.esx_project_unpacked = False  # Initialize the state variable
         self.working_directory = None
-        self.esx_project_name = None
-        self.esx_filepath = None
+        self.project_name = None
+        self.filepath = None
         self.current_project_profile_module = None
         self.rename_aps_boundary_separator = 200  # Initialize the boundary separator variable
-        self.esx_required_tag_keys = {}
-        self.esx_optional_tag_keys = {}
+        self.required_tag_keys = {}
+        self.optional_tag_keys = {}
 
         # Define the configuration directory path
         self.config_dir = Path(__file__).resolve().parent / CONFIGURATION_DIR
@@ -677,7 +675,7 @@ class MyFrame(wx.Frame):
         elif not self.basic_checks():
             return
         else:
-            create_surveyed_ap_list(self.working_directory, self.esx_project_name, self.current_profile_ap_list_module.create_custom_measured_ap_list, self.append_message)
+            create_surveyed_ap_list(self.working_directory, self.project_name, self.current_profile_ap_list_module.create_custom_measured_ap_list, self.append_message)
 
     def on_admin_actions_dropdown_selection(self, event):
         selected_index = self.admin_actions_dropdown.GetSelection()
@@ -698,7 +696,7 @@ class MyFrame(wx.Frame):
     def on_display_project_detail(self, event):
         if not self.basic_checks():
             return
-        self.current_project_detail_module.run(self.working_directory, self.esx_project_name, self.append_message)
+        self.current_project_detail_module.run(self.working_directory, self.project_name, self.append_message)
 
     def on_dir_structure_profile_dropdown_selection(self, event):
         selected_index = self.dir_structure_profile_dropdown.GetSelection()
@@ -900,26 +898,26 @@ class MyFrame(wx.Frame):
         dlg.Destroy()
 
     def on_backup(self, event):
-        if not self.esx_filepath:
+        if not self.filepath:
             if not self.get_single_specific_file_type('.esx'):
                 return
-        backup_esx(self.working_directory, self.esx_project_name, self.esx_filepath, self.append_message)
+        backup_esx(self.working_directory, self.project_name, self.filepath, self.append_message)
 
     def on_validate(self, event):
         if not self.basic_checks():
             return
-        validate_esx(self.working_directory, self.esx_project_name, self.append_message, self.esx_required_tag_keys, self.esx_optional_tag_keys)
+        validate_esx(self, self.append_message)
 
     def on_summarise(self, event):
         if not self.basic_checks():
             return
-        summarise_esx(self.working_directory, self.esx_project_name, self.append_message)
+        summarise_esx(self.working_directory, self.project_name, self.append_message)
 
     def on_create_ap_list(self, event):
         if not self.basic_checks():
             return
         if hasattr(self, 'current_project_profile_module'):
-            create_ap_list(self.working_directory, self.esx_project_name, self.append_message, self.current_profile_ap_list_module.create_custom_ap_list)
+            create_ap_list(self.working_directory, self.project_name, self.append_message, self.current_profile_ap_list_module.create_custom_ap_list)
 
     def on_copy_log(self, event):
         if wx.TheClipboard.Open():
@@ -952,13 +950,13 @@ class MyFrame(wx.Frame):
         for filepath in self.list_box.GetStrings():
             if filepath.lower().endswith(extension):
                 if extension == '.esx':
-                    self.esx_filepath = Path(filepath)
-                    if not self.esx_filepath.exists():
-                        self.append_message(f'The file {self.esx_filepath} does not exist.')
+                    self.filepath = Path(filepath)
+                    if not self.filepath.exists():
+                        self.append_message(f'The file {self.filepath} does not exist.')
                         return False
-                    self.esx_project_name = self.esx_filepath.stem  # Set the project name based on the file stem
-                    self.append_message(f'Project name: {self.esx_project_name}')
-                    self.working_directory = self.esx_filepath.parent
+                    self.project_name = self.filepath.stem  # Set the project name based on the file stem
+                    self.append_message(f'Project name: {self.project_name}')
+                    self.working_directory = self.filepath.parent
                     self.append_message(f'Working directory: {self.working_directory}{nl}')
                 return True
 
@@ -969,7 +967,7 @@ class MyFrame(wx.Frame):
         if not self.esx_project_unpacked:
             if not self.get_single_specific_file_type('.esx'):
                 return
-            unpack_esx_file(self.working_directory, self.esx_project_name, self.esx_filepath, self.append_message)
+            unpack_esx_file(self.working_directory, self.project_name, self.filepath, self.append_message)
             self.esx_project_unpacked = True
         return True
 
@@ -989,8 +987,8 @@ class MyFrame(wx.Frame):
         self.current_profile_ap_list_module = project_profile_module
 
         # Update the object variables with the configuration from the selected module
-        self.esx_required_tag_keys = getattr(project_profile_module, 'requiredTagKeys', None)
-        self.esx_optional_tag_keys = getattr(project_profile_module, 'optionalTagKeys', None)
+        self.required_tag_keys = getattr(project_profile_module, 'requiredTagKeys', None)
+        self.optional_tag_keys = getattr(project_profile_module, 'optionalTagKeys', None)
         if hasattr(project_profile_module, 'preferred_ap_rename_script'):
             self.ap_rename_script_dropdown.SetStringSelection(project_profile_module.preferred_ap_rename_script)
             self.on_ap_rename_script_dropdown_selection(None)
@@ -1037,7 +1035,7 @@ class MyFrame(wx.Frame):
         script_module = SourceFileLoader(selected_script, script_path).load_module()
 
         # Pass the start number to the rename function
-        ap_renamer(self.working_directory, self.esx_project_name, script_module, self.append_message, self.rename_aps_boundary_separator, rename_start_number)
+        ap_renamer(self.working_directory, self.project_name, script_module, self.append_message, self.rename_aps_boundary_separator, rename_start_number)
 
     def on_ap_rename_script_dropdown_selection(self, event):
         """Handle rename script selection change."""
@@ -1077,12 +1075,12 @@ class MyFrame(wx.Frame):
     def on_export_ap_images(self, event):
         if not self.basic_checks():
             return
-        export_ap_images.export_ap_images(self.working_directory, self.esx_project_name, self.append_message)
+        export_ap_images.export_ap_images(self.working_directory, self.project_name, self.append_message)
 
     def on_export_note_images(self, event):
         if not self.basic_checks():
             return
-        export_note_images.export_note_images(self.working_directory, self.esx_project_name, self.append_message)
+        export_note_images.export_note_images(self.working_directory, self.project_name, self.append_message)
 
     def on_export_pds_maps(self, event):
         if not self.basic_checks():
@@ -1098,7 +1096,7 @@ class MyFrame(wx.Frame):
         try:
             ap_icon_size = int(ap_icon_size)  # Convert the input to a float
             ap_name_label_size = int(ap_name_label_size)  # Ensure the AP name label size value is an integer
-            create_pds_maps_threaded(self.working_directory, self.esx_project_name, self.append_message, ap_icon_size, ap_name_label_size, self.stop_event)
+            create_pds_maps_threaded(self.working_directory, self.project_name, self.append_message, ap_icon_size, ap_name_label_size, self.stop_event)
 
         except ValueError:
             # Handle the case where the input is not a valid number
@@ -1118,7 +1116,7 @@ class MyFrame(wx.Frame):
         try:
             ap_icon_size = int(ap_icon_size)  # Ensure the AP icon size value is an integer
             ap_name_label_size = int(ap_name_label_size)  # Ensure the AP name label size value is an integer
-            create_custom_ap_location_maps_threaded(self.working_directory, self.esx_project_name, self.append_message, ap_icon_size, ap_name_label_size, self.stop_event)
+            create_custom_ap_location_maps_threaded(self.working_directory, self.project_name, self.append_message, ap_icon_size, ap_name_label_size, self.stop_event)
 
         except ValueError:
             # Handle the case where the input is not a valid number
@@ -1138,7 +1136,7 @@ class MyFrame(wx.Frame):
         try:
             zoomed_ap_crop_size = int(zoomed_ap_crop_size)  # Convert the input to a float
             custom_ap_icon_size = int(ap_icon_size)  # Convert the input to a float
-            create_zoomed_ap_location_maps_threaded(self.working_directory, self.esx_project_name, self.append_message, zoomed_ap_crop_size, custom_ap_icon_size, ap_name_label_size, self.stop_event)
+            create_zoomed_ap_location_maps_threaded(self.working_directory, self.project_name, self.append_message, zoomed_ap_crop_size, custom_ap_icon_size, ap_name_label_size, self.stop_event)
         except ValueError:
             # Handle the case where the input is not a valid number
             wx.MessageBox("Please enter a valid number", "Error", wx.OK | wx.ICON_ERROR)
@@ -1146,7 +1144,7 @@ class MyFrame(wx.Frame):
     def on_export_blank_maps(self, event):
         if not self.basic_checks():
             return
-        extract_blank_maps(self.working_directory, self.esx_project_name, self.append_message)
+        extract_blank_maps(self.working_directory, self.project_name, self.append_message)
 
     def on_create_pds_project(self, event):
         if not self.basic_checks():
@@ -1166,8 +1164,8 @@ class MyFrame(wx.Frame):
         if not self.esx_project_unpacked:
             self.get_single_specific_file_type('.esx')
         # Check that working directory and project name directories exist
-        if self.working_directory and (self.working_directory / self.esx_project_name).exists():
-            rebundle_project(self.working_directory, self.esx_project_name, self.append_message)
+        if self.working_directory and (self.working_directory / self.project_name).exists():
+            rebundle_project(self.working_directory, self.project_name, self.append_message)
 
     def drop_target_label_callback(self, hide=False):
         if hide:
@@ -1213,7 +1211,7 @@ class MyFrame(wx.Frame):
         if not self.basic_checks():
             return
 
-        visualise_ap_renaming(self.working_directory, self.esx_project_name, self.append_message, self)
+        visualise_ap_renaming(self.working_directory, self.project_name, self.append_message, self)
 
     def update_boundary_separator_value(self, value):
         """Callback function to update the boundary_separator variable."""

@@ -126,10 +126,10 @@ def validate_ekahau_crop(floor_plans_json, message_callback):
         return True
 
 
-def validate_esx(working_directory, project_name, message_callback, required_tag_keys, optional_tag_keys):
-    message_callback(f'Performing Validation for: {project_name}')
+def validate_esx(esx, message_callback):
+    message_callback(f'Performing Validation for: {esx.project_name}')
 
-    project_dir = working_directory / project_name
+    project_dir = esx.working_directory / esx.project_name
 
     # Load JSON data
     floor_plans_json = load_json(project_dir, 'floorPlans.json', message_callback)
@@ -150,7 +150,7 @@ def validate_esx(working_directory, project_name, message_callback, required_tag
         for tag in ap['tags']:
             custom_ap_dict[ap['name']]['tags'][tag_keys_dict.get(tag['tagKeyId'])] = tag['value']
 
-    offenders = offender_constructor(required_tag_keys, optional_tag_keys)
+    offenders = offender_constructor(esx.required_tag_keys, esx.optional_tag_keys)
 
     # Count occurrences of each
     for ap in custom_ap_dict.values():
@@ -178,12 +178,12 @@ def validate_esx(working_directory, project_name, message_callback, required_tag
         if ap.get('antennaMounting') == 'WALL' and ap.get('radios', {}).get(FIVE_GHZ_RADIO_ID, {}).get('antennaTilt') == 0:
             offenders['antennaMounting_and_antennaTilt_mismatch'].append(ap['name'])
 
-        for tagKey in required_tag_keys:
+        for tagKey in esx.required_tag_keys:
             if tagKey not in ap['tags']:
                 offenders['missing_required_tags'][tagKey].append(ap['name'])
 
     total_ap_count = len(custom_ap_dict)
-    total_required_tag_keys_count = len(required_tag_keys)
+    total_required_tag_keys_count = len(esx.required_tag_keys)
 
     # Perform all validations
     validations = [
@@ -191,7 +191,7 @@ def validate_esx(working_directory, project_name, message_callback, required_tag
         validate_ap_name_uniqueness(offenders, total_ap_count, message_callback),
         validate_color_assignment(offenders, total_ap_count, message_callback),
         validate_height_manipulation(offenders, total_ap_count, message_callback),
-        validate_required_tags(offenders, total_ap_count, total_required_tag_keys_count, required_tag_keys, message_callback),
+        validate_required_tags(offenders, total_ap_count, total_required_tag_keys_count, esx.required_tag_keys, message_callback),
         validate_antenna_tilt(offenders, total_ap_count, message_callback),
         validate_antenna_mounting_and_tilt_mismatch(offenders, total_ap_count, message_callback, custom_ap_dict),
         validate_view_as_mobile_disabled(project_configuration_json, message_callback),
