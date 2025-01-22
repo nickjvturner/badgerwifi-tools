@@ -2,6 +2,7 @@ import requests
 from common import REPO_URL
 
 
+
 def get_commit_info():
     try:
         response = requests.get(REPO_URL)
