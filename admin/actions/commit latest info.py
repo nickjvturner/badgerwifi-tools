@@ -1,8 +1,7 @@
 import requests
-
+from common import REPO_URL
 
 def get_latest_commit_info():
-    REPO_URL = "https://api.github.com/repos/nickjvturner/badgerwifi-git/commits/main"
     try:
         response = requests.get(REPO_URL)
         response.raise_for_status()

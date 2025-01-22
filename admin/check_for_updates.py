@@ -3,10 +3,7 @@ import requests
 import wx
 
 from common import nl
-
-
-# Replace 'your_username/your_repo' with your actual GitHub repository details
-REPO_URL = "https://api.github.com/repos/nickjvturner/badgerwifi-git/commits/main"
+from common import REPO_URL
 
 
 def get_latest_commit_sha():
@@ -54,5 +51,3 @@ def check_for_updates(message_callback):
     else:
         wx.MessageBox("Unable to check for updates.", "Error", wx.OK | wx.ICON_ERROR)
         message_callback(f'Unable to check for updates')
-
-
