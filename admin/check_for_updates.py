@@ -3,7 +3,9 @@ import requests
 import wx
 
 from common import nl
-from common import REPO_URL
+from common import REPO_BASE_URL
+
+REPO_URL = f"{REPO_BASE_URL}/commits/main"
 
 
 def get_latest_commit_sha():

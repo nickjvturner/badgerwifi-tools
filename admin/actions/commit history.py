@@ -1,6 +1,9 @@
 import requests
-from common import REPO_URL
+from datetime import datetime
 
+from common import REPO_BASE_URL
+
+REPO_URL = f"{REPO_BASE_URL}/commits"
 
 
 def get_commit_info():
@@ -18,6 +21,10 @@ def run(message_callback):
     message_callback('Checking for updated code on GitHub...')
     commits = get_commit_info()
     # pprint(commits)
+
+    # Sort commits by date (newest first)
+    if commits:
+        commits.sort(key=lambda commit: datetime.fromisoformat(commit['commit']['committer']['date'].replace("Z", "+00:00")), reverse=False)
 
     for commit in commits:
         sha = commit['sha']
