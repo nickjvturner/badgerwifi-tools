@@ -10,3 +10,4 @@ app_state.json
 .idea/*
 *.egg*
 badgerwifitools.spec
+.DS_Store
