@@ -109,6 +109,7 @@ class MyFrame(wx.Frame):
         self.rename_aps_boundary_separator = 200  # Initialize the boundary separator variable
         self.required_tag_keys = {}
         self.optional_tag_keys = {}
+        self.predictive_design_coverage_requirements = {}
 
         # Define the configuration directory path
         self.config_dir = Path(__file__).resolve().parent / CONFIGURATION_DIR
@@ -989,6 +990,7 @@ class MyFrame(wx.Frame):
         # Update the object variables with the configuration from the selected module
         self.required_tag_keys = getattr(project_profile_module, 'requiredTagKeys', None)
         self.optional_tag_keys = getattr(project_profile_module, 'optionalTagKeys', None)
+        self.predictive_design_coverage_requirements = getattr(project_profile_module, 'predictive_design_coverage_requirements', None)
         if hasattr(project_profile_module, 'preferred_ap_rename_script'):
             self.ap_rename_script_dropdown.SetStringSelection(project_profile_module.preferred_ap_rename_script)
             self.on_ap_rename_script_dropdown_selection(None)

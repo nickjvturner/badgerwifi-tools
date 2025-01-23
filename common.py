@@ -194,6 +194,26 @@ frequency_band_dict = {
 antenna_band_references = (' BLE', ' 2.4GHz', ' 5GHz', ' 6GHz')
 
 
+def sanitize_string(input_string, message_callback):
+    """
+    Check for control characters in a string and clean them if found.
+    """
+    # Regex to match control characters (non-printable ASCII)
+    control_chars = re.compile(r'[\x00-\x1F\x7F]')
+    sanitized = control_chars.sub('', input_string)
+    if sanitized != input_string:
+        message_callback(f"Control characters detected and removed from: {input_string}")
+    return sanitized
+
+
+def meters_to_feet_inches(meters):
+    # 1 meter = 3.28084 feet
+    total_inches = meters * 39.3701
+    feet = int(total_inches // 12)
+    inches = math.floor(total_inches % 12)
+    return f'''{feet}' {inches}" '''
+
+
 def load_json(project_dir: Path, filename: str, message_callback):
     """Load JSON data from a file."""
     try:

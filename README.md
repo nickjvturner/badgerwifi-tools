@@ -40,22 +40,20 @@ On Windows all the default options are fine.
 
 ## Installation
 Clone the repository to your local machine using the following command:
-Decide the folder where you want to clone the badgerwifi-git repository to, then navigate to that folder in your terminal window and run the following command:
-`git clone https://github.com/nickjvturner/badgerwifi-git`
+Decide the folder where you want to clone the badgerwifi-tools repository to, then navigate to that folder in your terminal window and run the following command:
+`git clone https://github.com/nickjvturner/badgerwifi-tools`
 
-Navigate to badgerwifi-git/wxGUI/badgerwifitools directory:
-`cd badgerwifi-git/wxGUI/badgerwifitools`
+Navigate to badgerwifi-tools directory:
+`cd badgerwifi-tools`
 
-Install the the application with the following command:
+Install all the missing dependencies with the following command:
 `pip install .`
 
 ## Usage
-You can now run the application from your terminal window with the following command:
-badgerwifitools
-
-If that does not work for you, you can navigate to the badgerwifi-git/wxGUI/badgerwifitools directory and run the following command:
+You can now run the application from your terminal window by executing main.py:
 macOS: `python3 main.py`
 Windows: `python main.py`
 
+
 ## How do I use the application?
-This should be self-explanatory, if not please reach out to me and tell me what you are not finding intuitive. At some point I will create a user guide.
+This should be somewhat self-explanatory, if not please reach out to me and tell me what you are not finding intuitive. At some point I will create a user guide.

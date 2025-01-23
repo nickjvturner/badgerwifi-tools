@@ -115,15 +115,126 @@ def validate_view_as_mobile_disabled(project_configuration_json, message_callbac
         return False
     return True
 
+
 # check if the floor plan has been cropped within Ekahau
 def validate_ekahau_crop(floor_plans_json, message_callback):
     for floor in floor_plans_json['floorPlans']:
         if floor.get('cropMinX') != 0 or floor.get('cropMinY') != 0 or floor.get('cropMaxX') != floor.get('width') or floor.get('cropMaxY') != floor.get('height'):
             message_callback(f"{SPACER}### MAP CROPPED WITHIN EKAHAU ###")
             message_callback(f"{FAIL}{floor.get('name')} has been cropped within Ekahau")
-            message_callback(f"This will prevent post-deployment map creation and seamless map swaps in later phases of the project")
+            message_callback(f"This may prevent or complicate post-deployment map creation and seamless map swaps in later phases of the project")
             return False
         return True
+
+
+def name_check(esx, requirements_json, message_callback):
+    for requirement in requirements_json['requirements']:
+        if requirement.get('name') == esx.predictive_design_coverage_requirements.get('name'):
+            message_callback(f"  PASS  - Profile '{esx.predictive_design_coverage_requirements.get('name')}' is defined")
+            return requirement
+
+    message_callback(f"{FAIL}Profile '{esx.predictive_design_coverage_requirements.get('name')}' is not defined\n")
+    return False
+
+
+def default_check(esx, requirement, message_callback):
+    # check if default match
+    if requirement.get('isDefault') == esx.predictive_design_coverage_requirements.get('isDefault'):
+        message_callback(f"  PASS  - Profile 'isDefault' is correctly configured as: {esx.predictive_design_coverage_requirements.get('isDefault')}, within Ekahau")
+        return True
+
+    message_callback(f"# FAIL  - Profile is NOT configured correctly as: {esx.predictive_design_coverage_requirements.get('isDefault')}, within Ekahau\n")
+    return False
+
+
+def extract_value_from_criteria(criteria_list, match_criteria):
+    """
+    Extracts the value from a criteria list where radioTechnology, frequencyBand, and type match.
+
+    :param criteria_list: List of criteria dictionaries to search through
+    :param match_criteria: Dictionary containing the criteria to match (radioTechnology, frequencyBand, type)
+    :return: The value of the matched criteria, or None if not found
+    """
+    for criteria in criteria_list:
+        if (criteria.get('radioTechnology') == match_criteria.get('radioTechnology') and
+                criteria.get('frequencyBand') == match_criteria.get('frequencyBand') and
+                criteria.get('type') == match_criteria.get('type')):
+            return criteria.get('value')
+    return None
+
+
+def specific_criteria_check(frequency_band, type, text_descriptor, esx, requirement, message_callback):
+    # check if specific criteria is a match
+    match_criteria = {
+        'radioTechnology': 'IEEE802_11',
+        'frequencyBand': frequency_band,
+        'type': type
+    }
+
+    BWT_value = extract_value_from_criteria(esx.predictive_design_coverage_requirements.get('criteria'), match_criteria)
+    ESX_value = extract_value_from_criteria(requirement.get('criteria'), match_criteria)
+
+    if ESX_value == BWT_value:
+        message_callback(f"  PASS  - {text_descriptor} is correctly configured as '{int(BWT_value)}' within Ekahau")
+        return True
+
+    message_callback(f"\n# FAIL  - {text_descriptor} is NOT configured correctly! Current value: '{int(ESX_value)}', should be: '{int(BWT_value)}'\n")
+    return False
+
+
+def validate_predictive_design_coverage_requirements(esx, requirements_json, message_callback):
+    message_callback(f"{SPACER}### PREDICTIVE DESIGN COVERAGE REQUIREMENTS ###")
+    if esx.predictive_design_coverage_requirements is None:
+        message_callback(f"Selected Project Profile does not define 'Predictive Design Coverage Requirements'")
+        return True
+
+    requirement = name_check(esx, requirements_json, message_callback)
+
+    if not requirement:
+        return False
+
+    predictive_design_coverage_requirements_pass = (
+        default_check(esx, requirement, message_callback),
+        specific_criteria_check('FIVE', 'SIGNAL_STRENGTH', '5GHz Primary Signal Strength', esx, requirement, message_callback),
+        specific_criteria_check('FIVE', 'SECONDARY_SIGNAL_STRENGTH', '5GHz Secondary Signal Strength', esx, requirement, message_callback),
+        specific_criteria_check('FIVE', 'SIGNAL_TO_NOISE_RATIO', '5GHz Signal to Noise Ratio', esx, requirement, message_callback),
+        specific_criteria_check('FIVE', 'DATA_RATE', '5GHz Data Rate', esx, requirement, message_callback),
+        specific_criteria_check('FIVE', 'CHANNEL_OVERLAP', '5GHz Channel Interference', esx, requirement, message_callback),
+    )
+
+    if all(predictive_design_coverage_requirements_pass):
+        message_callback(f"{PASS}All predictive design coverage requirements are configured correctly.")
+        return True
+
+    message_callback(f"{FAIL}One or more predictive design coverage requirements are not configured correctly.")
+    return False
+
+
+def requirementId_getter(esx, requirements_json):
+    for requirement in requirements_json['requirements']:
+        if requirement.get('name') == esx.predictive_design_coverage_requirements.get('name'):
+            return requirement.get('requirementId')
+
+    return False
+
+
+def validate_area_requirement_assignment(esx, areas_json, requirements_json, message_callback):
+    message_callback(f"{SPACER}### AREA REQUIREMENT ASSIGNMENT ###")
+    if esx.predictive_design_coverage_requirements is None:
+        message_callback(f"Selected Project Profile does not define 'Predictive Design Coverage Requirements' unable to validate area requirement assignment")
+        return False
+
+    target_requirementId = requirementId_getter(esx, requirements_json)
+
+    for area in areas_json['areas']:
+        if area.get('requirementID') != target_requirementId:
+            message_callback(f"{FAIL}Area '{area.get('name')}' is not assigned the correct coverage/requirement profile")
+            return False
+
+        message_callback(f"""  PASS  - Area '{area.get('name')}' is assigned the correct coverage/requirement profile""")
+            
+    message_callback(f"""{PASS}All defined areas are correctly assigned '{esx.predictive_design_coverage_requirements.get("name")}' coverage/requirement profile""")
+    return False
 
 
 def validate_esx(esx, message_callback):
@@ -137,6 +248,8 @@ def validate_esx(esx, message_callback):
     simulated_radios_json = load_json(project_dir, 'simulatedRadios.json', message_callback)
     tag_keys_json = load_json(project_dir, 'tagKeys.json', message_callback)
     project_configuration_json = load_json(project_dir, 'projectConfiguration.json', message_callback)
+    requirements_json = load_json(project_dir, 'requirements.json', message_callback)
+    areas_json = load_json(project_dir, 'areas.json', message_callback)
 
     # Process data
     floor_plans_dict = create_floor_plans_dict(floor_plans_json)
@@ -195,7 +308,9 @@ def validate_esx(esx, message_callback):
         validate_antenna_tilt(offenders, total_ap_count, message_callback),
         validate_antenna_mounting_and_tilt_mismatch(offenders, total_ap_count, message_callback, custom_ap_dict),
         validate_view_as_mobile_disabled(project_configuration_json, message_callback),
-        validate_ekahau_crop(floor_plans_json, message_callback)
+        validate_ekahau_crop(floor_plans_json, message_callback),
+        validate_predictive_design_coverage_requirements(esx, requirements_json, message_callback),
+        validate_area_requirement_assignment(esx, areas_json, requirements_json, message_callback)
     ]
 
     # Print pass/fail states
