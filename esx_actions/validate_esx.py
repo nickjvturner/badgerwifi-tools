@@ -219,6 +219,7 @@ def requirementId_getter(esx, requirements_json):
 
 
 def validate_area_requirement_assignment(esx, areas_json, requirements_json, message_callback):
+    # check if all areas are assigned the correct coverage/requirement profile
     message_callback(f"{SPACER}### AREA REQUIREMENT ASSIGNMENT ###")
     if esx.predictive_design_coverage_requirements is None:
         message_callback(f"Selected Project Profile does not define 'Predictive Design Coverage Requirements' unable to validate area requirement assignment")
