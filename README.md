@@ -57,3 +57,6 @@ Windows: `python main.py`
 
 ## How do I use the application?
 This should be somewhat self-explanatory, if not please reach out to me and tell me what you are not finding intuitive. At some point I will create a user guide.
+
+## What are the project profiles and where are they stored?
+The project profiles are `.py` files that define project specific conventions, requirements stored in the `profiles` directory. Each project profile is a JSON file that contains the project details and the settings for each of the automation scripts.

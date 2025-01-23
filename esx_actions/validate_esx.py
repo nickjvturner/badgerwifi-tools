@@ -234,7 +234,7 @@ def validate_area_requirement_assignment(esx, areas_json, requirements_json, mes
         message_callback(f"""  PASS  - Area '{area.get('name')}' is assigned the correct coverage/requirement profile""")
             
     message_callback(f"""{PASS}All defined areas are correctly assigned '{esx.predictive_design_coverage_requirements.get("name")}' coverage/requirement profile""")
-    return False
+    return True
 
 
 def validate_esx(esx, message_callback):
