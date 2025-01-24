@@ -13,6 +13,14 @@ from common import FIVE_GHZ_RADIO_ID
 from common import nl, SPACER, PASS, FAIL, CAUTION, HASH_BAR
 
 
+# def project_filename_compliance(esx, message_callback):
+#     if esx.
+#     message_callback(f"{SPACER}### ESX PROJECT FILE NAME FORMATTING ###")
+#
+
+
+
+
 def validate_ap_name_formatting(offenders, total_ap_count, message_callback):
     message_callback(f"{SPACER}### AP NAME FORMATTING ###")
     if len(offenders.get('ap_name_format', [])) > 0:
@@ -127,23 +135,54 @@ def validate_ekahau_crop(floor_plans_json, message_callback):
         return True
 
 
-def name_check(esx, requirements_json, message_callback):
+def check_duplicate_coverage_requirement_names(requirements_json, message_callback):
+    """
+    Checks for duplicate names in the requirements JSON.
+
+    :param requirements_json: The loaded requirements.json data
+    :param message_callback: Function to handle messages
+    :return: True if no duplicates found, False otherwise
+    """
+
+    # Extract all names
+    coverage_requirement_names = [requirement.get('name') for requirement in requirements_json.get('requirements', [])]
+
+    # Identify duplicates
+    duplicates = {name for name in coverage_requirement_names if coverage_requirement_names.count(name) > 1}
+
+    if duplicates:
+        message_callback(f"{SPACER}### COVERAGE REQUIREMENT NAME UNIQUENESS ###")
+        message_callback(f"{FAIL}Duplicate Coverage Requirement names found:")
+        for name in duplicates:
+            message_callback(f"  - {name}")
+        return False
+
+    return True
+
+
+def coverage_requirement_name_match_check(esx, requirements_json, message_callback):
     for requirement in requirements_json['requirements']:
         if requirement.get('name') == esx.predictive_design_coverage_requirements.get('name'):
-            message_callback(f"  PASS  - Profile '{esx.predictive_design_coverage_requirements.get('name')}' is defined")
+            message_callback(f"  PASS  - Coverage Requirement '{esx.predictive_design_coverage_requirements.get('name')}' is defined")
             return requirement
 
-    message_callback(f"{FAIL}Profile '{esx.predictive_design_coverage_requirements.get('name')}' is not defined\n")
+    message_callback(f"{FAIL}Coverage Requirement '{esx.predictive_design_coverage_requirements.get('name')}' is not defined\n")
     return False
 
 
 def default_check(esx, requirement, message_callback):
     # check if default match
     if requirement.get('isDefault') == esx.predictive_design_coverage_requirements.get('isDefault'):
-        message_callback(f"  PASS  - Profile 'isDefault' is correctly configured as: {esx.predictive_design_coverage_requirements.get('isDefault')}, within Ekahau")
+        if esx.predictive_design_coverage_requirements.get('isDefault'):
+            message_callback(f"  PASS  - Coverage Requirement is correctly configured as the 'default'")
+        else:
+            message_callback(f"  PASS  - Coverage Requirement is correctly configured as 'non-default'")
         return True
 
-    message_callback(f"# FAIL  - Profile is NOT configured correctly as: {esx.predictive_design_coverage_requirements.get('isDefault')}, within Ekahau\n")
+    if esx.predictive_design_coverage_requirements.get('isDefault'):
+        message_callback(f"# FAIL  - Coverage Requirement is NOT configured as 'default'\n")
+    else:
+        message_callback(f"# FAIL  - Coverage Requirement is NOT configured as 'non-default'\n")
     return False
 
 
@@ -175,7 +214,7 @@ def specific_criteria_check(frequency_band, type, text_descriptor, esx, requirem
     ESX_value = extract_value_from_criteria(requirement.get('criteria'), match_criteria)
 
     if ESX_value == BWT_value:
-        message_callback(f"  PASS  - {text_descriptor} is correctly configured as '{int(BWT_value)}' within Ekahau")
+        message_callback(f"  PASS  - {text_descriptor} is correctly configured as '{int(BWT_value)}'")
         return True
 
     message_callback(f"\n# FAIL  - {text_descriptor} is NOT configured correctly! Current value: '{int(ESX_value)}', should be: '{int(BWT_value)}'\n")
@@ -188,7 +227,7 @@ def validate_predictive_design_coverage_requirements(esx, requirements_json, mes
         message_callback(f"Selected Project Profile does not define 'Predictive Design Coverage Requirements'")
         return True
 
-    requirement = name_check(esx, requirements_json, message_callback)
+    requirement = coverage_requirement_name_match_check(esx, requirements_json, message_callback)
 
     if not requirement:
         return False
@@ -219,7 +258,7 @@ def requirementId_getter(esx, requirements_json):
 
 
 def validate_area_requirement_assignment(esx, areas_json, requirements_json, message_callback):
-    # check if all areas are assigned the correct coverage/requirement profile
+    # check if all areas are assigned the correct coverage requirement
     message_callback(f"{SPACER}### AREA REQUIREMENT ASSIGNMENT ###")
     if esx.predictive_design_coverage_requirements is None:
         message_callback(f"Selected Project Profile does not define 'Predictive Design Coverage Requirements' unable to validate area requirement assignment")
@@ -229,12 +268,12 @@ def validate_area_requirement_assignment(esx, areas_json, requirements_json, mes
 
     for area in areas_json['areas']:
         if area.get('requirementID') != target_requirementId:
-            message_callback(f"{FAIL}Area '{area.get('name')}' is not assigned the correct coverage/requirement profile")
+            message_callback(f"{FAIL}Area '{area.get('name')}' is not assigned the correct coverage requirement")
             return False
 
-        message_callback(f"""  PASS  - Area '{area.get('name')}' is assigned the correct coverage/requirement profile""")
+        message_callback(f"""  PASS  - Area '{area.get('name')}' is assigned the correct coverage requirement""")
             
-    message_callback(f"""{PASS}All defined areas are correctly assigned '{esx.predictive_design_coverage_requirements.get("name")}' coverage/requirement profile""")
+    message_callback(f"""{PASS}All defined areas are correctly assigned '{esx.predictive_design_coverage_requirements.get("name")}' coverage requirement""")
     return True
 
 
@@ -310,6 +349,7 @@ def validate_esx(esx, message_callback):
         validate_antenna_mounting_and_tilt_mismatch(offenders, total_ap_count, message_callback, custom_ap_dict),
         validate_view_as_mobile_disabled(project_configuration_json, message_callback),
         validate_ekahau_crop(floor_plans_json, message_callback),
+        check_duplicate_coverage_requirement_names(requirements_json, message_callback),
         validate_predictive_design_coverage_requirements(esx, requirements_json, message_callback),
         validate_area_requirement_assignment(esx, areas_json, requirements_json, message_callback)
     ]
