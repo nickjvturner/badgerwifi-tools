@@ -48,6 +48,7 @@ from common import DIR_STRUCTURE_PROFILES_DIR
 
 from common import discover_available_scripts
 from common import import_module_from_path
+from common import tracked_project_profile_check_for_update
 
 from admin import check_for_updates
 from admin.dir_creator import select_root_and_create_directory_structure
@@ -109,7 +110,10 @@ class MyFrame(wx.Frame):
         self.rename_aps_boundary_separator = 200  # Initialize the boundary separator variable
         self.required_tag_keys = {}
         self.optional_tag_keys = {}
+        self.predictive_design_expected_pattern = None
         self.predictive_design_coverage_requirements = {}
+        self.post_deployment_survey_expected_pattern = None
+        self.post_deployment_survey_coverage_requirements = []
 
         # Define the configuration directory path
         self.config_dir = Path(__file__).resolve().parent / CONFIGURATION_DIR
@@ -990,10 +994,15 @@ class MyFrame(wx.Frame):
         # Update the object variables with the configuration from the selected module
         self.required_tag_keys = getattr(project_profile_module, 'requiredTagKeys', None)
         self.optional_tag_keys = getattr(project_profile_module, 'optionalTagKeys', None)
+        self.predictive_design_expected_pattern = getattr(project_profile_module, 'PREDICTIVE_DESIGN_EXPECTED_PATTERN', None)
         self.predictive_design_coverage_requirements = getattr(project_profile_module, 'predictive_design_coverage_requirements', None)
+        self.post_deployment_survey_expected_pattern = getattr(project_profile_module, 'POST_DEPLOYMENT_SURVEY_EXPECTED_PATTERN', None)
+        self.post_deployment_survey_coverage_requirements = getattr(project_profile_module, 'post_deployment_survey_coverage_requirements', None)
         if hasattr(project_profile_module, 'preferred_ap_rename_script'):
             self.ap_rename_script_dropdown.SetStringSelection(project_profile_module.preferred_ap_rename_script)
             self.on_ap_rename_script_dropdown_selection(None)
+        if hasattr(project_profile_module, 'project_profile_id'):
+            tracked_project_profile_check_for_update(project_profile_module, self.append_message)
         self.save_application_state(None)
 
     def on_design_project_profile_dropdown_selection(self, event):

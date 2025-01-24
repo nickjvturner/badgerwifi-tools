@@ -1,5 +1,6 @@
 # replacement_dict.py
 
+import re
 import os
 import wx
 import json
@@ -7,6 +8,8 @@ import shutil
 from pathlib import Path
 import importlib.util
 import base64
+import math
+import requests
 
 
 # Constants
@@ -194,6 +197,30 @@ frequency_band_dict = {
 antenna_band_references = (' BLE', ' 2.4GHz', ' 5GHz', ' 6GHz')
 
 
+def tracked_project_profile_check_for_update(project_profile_module, message_callback):
+    try:
+        # Fetch the latest version from the lookup URL
+        response = requests.get(project_profile_module.tracked_project_profile_version_url, timeout=10)
+        response.raise_for_status()
+        latest_data = response.json()
+
+        if project_profile_module.project_profile_id not in latest_data:
+            raise KeyError(f"Lookup ID {project_profile_module.project_profile_id} not found in the lookup data from {url}.")
+
+        latest_version = latest_data[project_profile_module.project_profile_id]["version"]
+
+        # Compare versions
+        if project_profile_module.project_profile_version < latest_version:
+            message = f"Update available for {project_profile_module.project_profile_name}: {project_profile_module.project_profile_version} -> {latest_version}"
+            wx.CallAfter(message_callback, HASH_BAR)
+            wx.CallAfter(message_callback, message)
+            wx.CallAfter(message_callback, project_profile_module.project_profile_update_acquisition_message)
+
+    except (requests.RequestException, json.JSONDecodeError, KeyError) as e:
+        error_message = f"Error checking for updates: {e}"
+        wx.CallAfter(message_callback, error_message)
+
+
 def sanitize_string(input_string, message_callback):
     """
     Check for control characters in a string and clean them if found.
@@ -220,14 +247,15 @@ def load_json(project_dir: Path, filename: str, message_callback):
         with open(project_dir / filename, encoding='utf-8') as json_file:
             return json.load(json_file)
     except FileNotFoundError:
-        print(f'{filename} not found, the project probably does not contain this data type.')
+        # print(f'{filename} not found, the project probably does not contain this data type.')
+        message_callback(f'{filename} not found, the project probably does not contain this data type.')
         return None
     except UnicodeDecodeError as e:
-        print(f"Error decoding {filename}: {e}")
+        # print(f"Error decoding {filename}: {e}")
         message_callback(f"Error decoding {filename}: {e}")
         return None
     except json.JSONDecodeError as e:
-        print(f"Error parsing JSON in {filename}: {e}")
+        # print(f"Error parsing JSON in {filename}: {e}")
         message_callback(f"Error parsing JSON in {filename}: {e}")
         return None
 
@@ -587,7 +615,7 @@ def decode_tx_power(ie_base64):
                 tx_power_field = element_data[0]
                 link_margin = element_data[1]
 
-               # The Transmit Power field is an unsigned integer representing dBm
+                # The Transmit Power field is an unsigned integer representing dBm
                 tx_power = tx_power_field  # in dBm
                 print(f"Transmit Power: {tx_power} dBm")
         index += length  # Move to the next IE
