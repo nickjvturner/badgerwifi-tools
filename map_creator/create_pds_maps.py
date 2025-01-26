@@ -7,6 +7,7 @@ from pathlib import Path
 from PIL import Image
 
 from common import nl
+from common import PROCESS_COMPLETE
 from common import load_json
 from common import create_floor_plans_dict
 from common import create_simulated_radios_dict
@@ -126,6 +127,6 @@ def create_pds_maps(working_directory, project_name, message_callback, custom_ap
 
     try:
         shutil.rmtree(temp_dir)
-        wx.CallAfter(message_callback, f'{nl}### PROCESS COMPLETE ###{nl}')
+        wx.CallAfter(message_callback, f'{PROCESS_COMPLETE}')
     except Exception as e:
         wx.CallAfter(message_callback, e)

@@ -5,6 +5,7 @@ import json
 
 from common import load_json
 from common import nl
+from common import PROCESS_COMPLETE
 from esx_actions.rebundle_esx import rebundle_project
 
 
@@ -187,3 +188,4 @@ def create_pds_project_esx(self, message_callback):
         if temp_dir.exists():
             shutil.rmtree(temp_dir)
             wx.CallAfter(message_callback, f"Temporary directory {temp_dir} has been deleted")
+            wx.CallAfter(message_callback, PROCESS_COMPLETE)
