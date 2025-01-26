@@ -57,12 +57,11 @@ def name_check(target_name, module, message_callback):
         profile.get('name') for profile in getattr(module, 'profiles', [])
     ]
 
-    # Check if the target_name matches any name in the list
+    # Check if the target_name matches any existing name in the list
     if target_name in names_to_check:
         wx.CallAfter(message_callback, f"Match found for name: {target_name}")
         return True
     else:
-        wx.CallAfter(message_callback, f"No match found for name: {target_name}")
         return False
 
 
