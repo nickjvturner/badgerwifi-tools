@@ -16,7 +16,8 @@ def get_latest_commit_info():
         return None, None
 
 
-def run(message_callback):
+def run(self):
+    message_callback = self.append_message
     message_callback('Checking for updated code on GitHub...')
     latest_sha, latest_message = get_latest_commit_info()
     message_callback(f'latest commit SHA: {latest_sha}')

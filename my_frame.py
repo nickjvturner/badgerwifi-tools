@@ -688,7 +688,7 @@ class MyFrame(wx.Frame):
         self.current_admin_action_module = self.load_module(ADMIN_ACTIONS_DIR, action_module)
 
     def on_perform_admin_action(self, event):
-        self.current_admin_action_module.run(self.append_message)
+        self.current_admin_action_module.run(self)
 
     def on_check_for_updates(self, event):
         check_for_updates.check_for_updates(self.append_message)

@@ -28,7 +28,8 @@ def get_git_commit_sha():
         return None
 
 
-def check_for_updates(message_callback):
+def check_for_updates(self):
+    message_callback = self.append_message
     message_callback('Checking for updated code on GitHub...')
     latest_sha = get_latest_commit_sha()
     local_commit_sha = get_git_commit_sha()
