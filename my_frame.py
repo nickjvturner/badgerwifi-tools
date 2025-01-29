@@ -49,6 +49,7 @@ from common import DIR_STRUCTURE_PROFILES_DIR
 from common import discover_available_scripts
 from common import import_module_from_path
 from common import tracked_project_profile_check_for_update
+from common import example_project_profile_names
 
 from admin import check_for_updates
 from admin.dir_creator import select_root_and_create_directory_structure
@@ -990,6 +991,24 @@ class MyFrame(wx.Frame):
         project_profile_module = self.load_project_profile(selected_profile)
         self.project_profile_module = project_profile_module
         self.current_profile_ap_list_module = project_profile_module
+
+        self.on_clear_log(None)
+        self.append_message(f"Project profile {selected_profile} loaded.")
+
+        # Temporary check to ensure everybody gets the latest project profiles from SharePoint
+        if selected_profile not in example_project_profile_names:
+            if not hasattr(self.project_profile_module, 'project_profile_id'):
+                self.append_message(f"Selected project profile does not have a project_profile_id attribute. Please update the project profile module.")
+
+            if not hasattr(self.project_profile_module, 'project_profile_version'):
+                self.append_message(f"Selected project profile does not have a project_profile_version attribute. Please update the project profile module.")
+
+            if hasattr(self.project_profile_module, 'project_profile_version'):
+                if float(self.project_profile_module.project_profile_version) > 2:
+                    self.append_message(f"Selected project profile has an outdated versioning scheme. Please update the project profile module.")
+
+            else:
+                self.append_message(f"Selected project profile does not have a project_profile_version attribute. Please update the project profile module.")
 
         # Update the object variables with the configuration from the selected module
         self.required_tag_keys = getattr(project_profile_module, 'requiredTagKeys', None)
