@@ -639,11 +639,11 @@ class MyFrame(wx.Frame):
 
     @staticmethod
     def on_view_release_notes(event):
-        webbrowser.open("https://github.com/nickjvturner/badgerwifi-git/activity")
+        webbrowser.open("https://github.com/nickjvturner/badgerwifi-tools/activity")
 
     def on_feedback(self, event):
         self.append_message(f"Opening feedback page... {nl}Please leave your feedback on the GitHub page.")
-        webbrowser.open("https://github.com/nickjvturner/badgerwifi-git/issues")
+        webbrowser.open("https://github.com/nickjvturner/badgerwifi-tools/issues")
 
     @staticmethod
     def on_about(event):
