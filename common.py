@@ -197,6 +197,8 @@ frequency_band_dict = {
 
 antenna_band_references = (' BLE', ' 2.4GHz', ' 5GHz', ' 6GHz')
 
+example_project_profile_names = ['example 1', 'example 2']
+
 
 def tracked_project_profile_check_for_update(project_profile_module, message_callback):
     try:
