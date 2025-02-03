@@ -102,7 +102,23 @@ def create_pds_maps(working_directory, project_name, message_callback, custom_ap
         all_aps = None
 
         if not aps_on_this_floor:
-            wx.CallAfter(message_callback, "No APs on this floor.")
+            wx.CallAfter(message_callback, f"No APs on this floor, generating a blank PDS floor plan.")
+
+            # Create a blank floor plan image
+            blank_floor_plan = source_floor_plan_image.copy()
+
+            # Apply cropping if necessary
+            # if map_cropped_within_ekahau:
+            #     blank_floor_plan = blank_floor_plan.crop(crop_bitmap)
+
+            # Stamp the blank map with the project filename
+            blank_floor_plan = add_project_filename_to_map(blank_floor_plan, ap_name_label_size, project_name)
+            wx.CallAfter(message_callback, "Blank PDS map stamped with project filename")
+
+            # Save the blank PDS floor plan
+            blank_floor_plan.save(Path(pds_plan_dir / floor['name']).with_suffix('.png'))
+
+            # Continue to the next floor
             continue
 
         else:

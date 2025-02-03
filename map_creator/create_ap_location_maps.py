@@ -103,7 +103,23 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
         all_aps = None
 
         if not aps_on_this_floor:
-            wx.CallAfter(message_callback, "No APs on this floor.")
+            wx.CallAfter(message_callback, f"No APs on this floor, generating a blank floor plan.")
+
+            # Create a blank floor plan image to save
+            blank_floor_plan = source_floor_plan_image.copy()
+
+            # Crop it if Ekahau cropping applies
+            if map_cropped_within_ekahau:
+                blank_floor_plan = blank_floor_plan.crop(crop_bitmap)
+
+            # Add project filename to blank map
+            blank_floor_plan = add_project_filename_to_map(blank_floor_plan, ap_name_label_size, project_name)
+            wx.CallAfter(message_callback, "Blank map stamped with project filename")
+
+            # Save the blank floor plan
+            blank_floor_plan.save(Path(custom_ap_location_maps / floor['name']).with_suffix('.png'))
+
+            # Continue to the next floor instead of skipping
             continue
 
         else:
