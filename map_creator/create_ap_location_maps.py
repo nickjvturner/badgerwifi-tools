@@ -151,3 +151,17 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
     except Exception as e:
         print(e)
         wx.CallAfter(message_callback, f'{nl}# AN ERROR OCCURRED ATTEMPTING TO DELETE THE TEMP DIR #{nl}')
+
+        import os
+
+        def clear_and_remove_dir(directory):
+            if os.path.exists(directory):
+                for root, dirs, files in os.walk(directory, topdown=False):
+                    for file in files:
+                        os.remove(os.path.join(root, file))  # Delete files
+                    for dir in dirs:
+                        os.rmdir(os.path.join(root, dir))  # Delete empty subdirectories
+                shutil.rmtree(directory, ignore_errors=True)  # Remove root folder
+
+        clear_and_remove_dir(temp_dir)
+
