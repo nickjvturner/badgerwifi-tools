@@ -27,6 +27,7 @@ FAIL = '----\nFAIL\n----\n'
 CAUTION = '-------\nCAUTION\n-------\n'
 HASH_BAR = '\n\n#########################\n\n'
 PROCESS_COMPLETE = '\n### PROCESS COMPLETE ###\n'
+PROCESS_ABORTED = '\n### PROCESS ABORTED ###\n'
 
 ESX_EXTENSION = '.esx'
 DOCX_EXTENSION = '.docx'
