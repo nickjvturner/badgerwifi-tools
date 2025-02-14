@@ -140,18 +140,14 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
 
         # Save the output images
         try:
-            print('checkpoint 1')
             all_aps.save(Path(custom_ap_location_maps / floor['name']).with_suffix('.png'))
         except Exception as e:
-            print('checkpoint 2')
-            wx.CallAfter(message_callback, e)
+            print(e)
+            wx.CallAfter(message_callback, "# AN ERROR OCCURRED SAVING THE OUTPUT IMAGES# ")
 
     try:
-        # shutil.rmtree(temp_dir)
+        shutil.rmtree(temp_dir)
         wx.CallAfter(message_callback, f'{nl}### PROCESS COMPLETE ###{nl}')
     except Exception as e:
-        print('checkpoint 3')
-
-        # wx.CallAfter(message_callback, e)
         print(e)
-        wx.CallAfter(message_callback, f'{nl}### ERROR ###{nl}')
+        wx.CallAfter(message_callback, f'{nl}# AN ERROR OCCURRED ATTEMPTING TO DELETE THE TEMP DIR #{nl}')
