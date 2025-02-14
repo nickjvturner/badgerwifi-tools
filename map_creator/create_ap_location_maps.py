@@ -139,7 +139,10 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
         wx.CallAfter(message_callback, "map stamped with project filename")
 
         # Save the output images
-        all_aps.save(Path(custom_ap_location_maps / floor['name']).with_suffix('.png'))
+        try:
+            all_aps.save(Path(custom_ap_location_maps / floor['name']).with_suffix('.png'))
+        except Exception as e:
+            wx.CallAfter(message_callback, e)
 
     try:
         shutil.rmtree(temp_dir)
