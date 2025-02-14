@@ -1,13 +1,12 @@
-OUTPUT/
-esx_files/
-example*/
-archive/
 *.esx
 *.docx
-app_state.json
 *.xml
 *.iml
-.idea/*
 *.egg*
-badgerwifitools.spec
+.idea/*
 .DS_Store
+app_state.json
+badgerwifitools.spec
+project_profiles/*
+!project_profiles/example 1.py
+!project_profiles/example 2.py
