@@ -145,6 +145,8 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
             print(e)
             wx.CallAfter(message_callback, "# AN ERROR OCCURRED SAVING THE OUTPUT IMAGES# ")
 
+        source_floor_plan_image.close()
+
     try:
         shutil.rmtree(temp_dir)
         wx.CallAfter(message_callback, f'{nl}### PROCESS COMPLETE ###{nl}')
