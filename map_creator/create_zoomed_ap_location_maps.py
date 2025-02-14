@@ -10,6 +10,7 @@ from common import nl
 from common import load_json
 from common import create_floor_plans_dict
 from common import create_simulated_radios_dict
+from common import ERROR, PROCESS_ABORTED, PROCESS_COMPLETE
 
 from map_creator.map_creator_comon import vector_source_check
 from map_creator.map_creator_comon import crop_assessment
@@ -69,7 +70,7 @@ def create_zoomed_ap_location_maps(working_directory, project_name, message_call
 
     for floor in sorted(floor_plans_json['floorPlans'], key=lambda i: i['name']):
         if stop_event.is_set():
-            wx.CallAfter(message_callback, f'{nl}### PROCESS ABORTED ###')
+            wx.CallAfter(message_callback, PROCESS_ABORTED)
             return
 
         floor_id = vector_source_check(floor, message_callback)
@@ -86,7 +87,7 @@ def create_zoomed_ap_location_maps(working_directory, project_name, message_call
 
         for ap in sorted(access_points_json['accessPoints'], key=lambda i: i['name']):
             if stop_event.is_set():
-                wx.CallAfter(message_callback, f'{nl}### PROCESS ABORTED ###')
+                wx.CallAfter(message_callback, PROCESS_ABORTED)
                 return
 
             if ap['location']['floorPlanId'] == floor['id']:
@@ -94,7 +95,7 @@ def create_zoomed_ap_location_maps(working_directory, project_name, message_call
 
         if aps_on_this_floor:
             if stop_event.is_set():
-                wx.CallAfter(message_callback, f'{nl}### PROCESS ABORTED ###')
+                wx.CallAfter(message_callback, PROCESS_ABORTED)
                 return
 
             current_map_image = source_floor_plan_image.copy()
@@ -106,7 +107,7 @@ def create_zoomed_ap_location_maps(working_directory, project_name, message_call
             wx.CallAfter(message_callback, f"{nl}Creating Custom AP location map for: {floor['name']}{nl}")
             for ap in aps_on_this_floor:
                 if stop_event.is_set():
-                    wx.CallAfter(message_callback, f'{nl}### PROCESS ABORTED ###')
+                    wx.CallAfter(message_callback, PROCESS_ABORTED)
                     return
                 all_aps = annotate_map(current_map_image, ap, scaling_ratio, custom_ap_icon_size, ap_name_label_size, simulated_radio_dict, message_callback, floor_plans_dict)
 
@@ -126,7 +127,7 @@ def create_zoomed_ap_location_maps(working_directory, project_name, message_call
 
             for ap in aps_on_this_floor:
                 if stop_event.is_set():
-                    wx.CallAfter(message_callback, f'{nl}### PROCESS ABORTED ###')
+                    wx.CallAfter(message_callback, PROCESS_ABORTED)
                     return
 
                 per_ap_map_image = annotate_map(all_aps_faded.copy(), ap, scaling_ratio, custom_ap_icon_size, ap_name_label_size, simulated_radio_dict, message_callback, floor_plans_dict)
@@ -134,7 +135,12 @@ def create_zoomed_ap_location_maps(working_directory, project_name, message_call
                 cropped_per_ap_map_image = crop_map(per_ap_map_image, ap, scaling_ratio, zoomed_ap_crop_size)
 
                 # Save the cropped image with a new filename
-                cropped_per_ap_map_image.save(Path(zoom_faded_dir / (ap['name'] + '-zoomed')).with_suffix('.png'))
+                try:
+                    cropped_per_ap_map_image.save(Path(zoom_faded_dir / (ap['name'] + '-zoomed')).with_suffix('.png'))
+                    wx.CallAfter(message_callback, f"Saved zoomed image for AP: {ap['name']}")
+                except Exception as e:
+                    wx.CallAfter(message_callback, ERROR)
+                    wx.CallAfter(message_callback, str(e))
 
             # If map was cropped within Ekahau, crop the all_AP map
             if map_cropped_within_ekahau:
@@ -145,6 +151,7 @@ def create_zoomed_ap_location_maps(working_directory, project_name, message_call
 
     try:
         shutil.rmtree(temp_dir)
-        wx.CallAfter(message_callback, f'{nl}### Process Complete ###{nl}')
+        wx.CallAfter(message_callback, PROCESS_COMPLETE)
     except Exception as e:
-        print(e)
+        wx.CallAfter(message_callback, ERROR)
+        wx.CallAfter(message_callback, str(e))

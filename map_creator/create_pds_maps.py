@@ -11,6 +11,7 @@ from common import PROCESS_COMPLETE
 from common import load_json
 from common import create_floor_plans_dict
 from common import create_simulated_radios_dict
+from common import ERROR, PROCESS_ABORTED, PROCESS_COMPLETE
 
 from map_creator.map_creator_comon import vector_source_check
 from map_creator.map_creator_comon import crop_assessment
@@ -64,7 +65,7 @@ def create_pds_maps(working_directory, project_name, message_callback, custom_ap
 
     for floor in sorted(floor_plans_json['floorPlans'], key=lambda i: i['name']):
         if stop_event.is_set():
-            wx.CallAfter(message_callback, f'{nl}### PROCESS ABORTED ###')
+            wx.CallAfter(message_callback, PROCESS_ABORTED)
             return
 
         floor_id = vector_source_check(floor, message_callback)
@@ -90,7 +91,7 @@ def create_pds_maps(working_directory, project_name, message_callback, custom_ap
 
         for ap in sorted(access_points_json['accessPoints'], key=lambda i: i['name']):
             if stop_event.is_set():
-                wx.CallAfter(message_callback, f'{nl}### PROCESS ABORTED ###')
+                wx.CallAfter(message_callback, PROCESS_ABORTED)
                 return
 
             if ap['location']['floorPlanId'] == floor['id']:
@@ -110,6 +111,7 @@ def create_pds_maps(working_directory, project_name, message_callback, custom_ap
             # Apply cropping if necessary
             # if map_cropped_within_ekahau:
             #     blank_floor_plan = blank_floor_plan.crop(crop_bitmap)
+            # Disabled so that PDS maps are not cropped
 
             # Stamp the blank map with the project filename
             blank_floor_plan = add_project_filename_to_map(blank_floor_plan, ap_name_label_size, project_name)
@@ -125,7 +127,7 @@ def create_pds_maps(working_directory, project_name, message_callback, custom_ap
             # Generate the all_aps map
             for ap in aps_on_this_floor:
                 if stop_event.is_set():
-                    wx.CallAfter(message_callback, f'{nl}### PROCESS ABORTED ###')
+                    wx.CallAfter(message_callback, PROCESS_ABORTED)
                     return
 
                 all_aps = annotate_pds_map(current_map_image, ap, scaling_ratio, custom_ap_icon_size, ap_name_label_size, simulated_radio_dict, message_callback, floor_plans_dict)
@@ -139,10 +141,16 @@ def create_pds_maps(working_directory, project_name, message_callback, custom_ap
         wx.CallAfter(message_callback, "map stamped with project filename")
 
         # Save the output images
-        all_aps.save(Path(pds_plan_dir / floor['name']).with_suffix('.png'))
+        try:
+            all_aps.save(Path(pds_plan_dir / floor['name']).with_suffix('.png'))
+            wx.CallAfter(message_callback, f"{nl}PDS map saved: {floor['name']}{nl}")
+        except Exception as e:
+            wx.CallAfter(message_callback, ERROR)
+            wx.CallAfter(message_callback, str(e))
 
     try:
         shutil.rmtree(temp_dir)
-        wx.CallAfter(message_callback, f'{PROCESS_COMPLETE}')
+        wx.CallAfter(message_callback, PROCESS_COMPLETE)
     except Exception as e:
-        wx.CallAfter(message_callback, e)
+        wx.CallAfter(message_callback, ERROR)
+        wx.CallAfter(message_callback, str(e))

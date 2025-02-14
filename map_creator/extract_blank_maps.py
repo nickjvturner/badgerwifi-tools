@@ -9,6 +9,7 @@ from PIL import Image
 from common import nl
 from common import load_json
 from map_creator.map_creator_comon import vector_source_check
+from common import PROCESS_COMPLETE
 
 
 def export_floor_plan(source, destination, crop_bitmap=None):
@@ -40,4 +41,4 @@ def extract_blank_maps(working_directory, project_name, message_callback):
             shutil.copy(source_path, dest_path)
 
         wx.CallAfter(message_callback, f"{nl}Exported blank map for {floor['name']} to:{nl}{dest_path}{nl}")
-    wx.CallAfter(message_callback, f"{nl}### PROCESS COMPLETE ###")
+    wx.CallAfter(message_callback, PROCESS_COMPLETE)

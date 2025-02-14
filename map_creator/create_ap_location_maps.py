@@ -10,6 +10,7 @@ from common import nl
 from common import load_json
 from common import create_floor_plans_dict
 from common import create_simulated_radios_dict
+from common import ERROR, PROCESS_COMPLETE, PROCESS_ABORTED
 
 from map_creator.map_creator_comon import vector_source_check
 from map_creator.map_creator_comon import crop_assessment
@@ -64,7 +65,7 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
 
     for floor in sorted(floor_plans_json['floorPlans'], key=lambda i: i['name']):
         if stop_event.is_set():
-            wx.CallAfter(message_callback, f'{nl}### PROCESS ABORTED ###')
+            wx.CallAfter(message_callback, PROCESS_ABORTED)
             return
 
         wx.CallAfter(message_callback, f"{nl}{nl}Processing floor: {floor['name']}{nl}")
@@ -91,7 +92,7 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
 
         for ap in sorted(access_points_json['accessPoints'], key=lambda i: i['name']):
             if stop_event.is_set():
-                wx.CallAfter(message_callback, f'{nl}### PROCESS ABORTED ###')
+                wx.CallAfter(message_callback, PROCESS_ABORTED)
                 return
 
             if ap['location']['floorPlanId'] == floor['id']:
@@ -126,7 +127,7 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
             # Generate the all_aps map
             for ap in aps_on_this_floor:
                 if stop_event.is_set():
-                    wx.CallAfter(message_callback, "### PROCESS ABORTED ###")
+                    wx.CallAfter(message_callback, PROCESS_ABORTED)
                     return
                 all_aps = annotate_map(current_map_image, ap, scaling_ratio, custom_ap_icon_size, ap_name_label_size, simulated_radio_dict, message_callback, floor_plans_dict)
 
@@ -141,30 +142,18 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
         # Save the output images
         try:
             all_aps.save(Path(custom_ap_location_maps / floor['name']).with_suffix('.png'))
+            wx.CallAfter(message_callback, f"Custom AP location map for {floor['name']} saved successfully")
         except Exception as e:
+            wx.CallAfter(message_callback, ERROR)
+            wx.CallAfter(message_callback, "Failure Attempting to save the OUTPUT images")
             print(e)
-            wx.CallAfter(message_callback, "# AN ERROR OCCURRED SAVING THE OUTPUT IMAGES# ")
 
-        source_floor_plan_image.close()
-        current_map_image.close()
+        # source_floor_plan_image.close()
+        # current_map_image.close()
 
     try:
         shutil.rmtree(temp_dir)
-        wx.CallAfter(message_callback, f'{nl}### PROCESS COMPLETE ###{nl}')
+        wx.CallAfter(message_callback, PROCESS_COMPLETE)
     except Exception as e:
-        print(e)
-        wx.CallAfter(message_callback, f'{nl}# AN ERROR OCCURRED ATTEMPTING TO DELETE THE TEMP DIR #{nl}')
-
-        import os
-
-        def clear_and_remove_dir(directory):
-            if os.path.exists(directory):
-                for root, dirs, files in os.walk(directory, topdown=False):
-                    for file in files:
-                        os.remove(os.path.join(root, file))  # Delete files
-                    for dir in dirs:
-                        os.rmdir(os.path.join(root, dir))  # Delete empty subdirectories
-                shutil.rmtree(directory, ignore_errors=True)  # Remove root folder
-
-        clear_and_remove_dir(temp_dir)
-
+        wx.CallAfter(message_callback, ERROR)
+        wx.CallAfter(message_callback, str(e))
