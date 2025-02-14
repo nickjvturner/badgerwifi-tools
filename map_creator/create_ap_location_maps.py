@@ -140,13 +140,15 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
 
         # Save the output images
         try:
+            print('checkpoint 1')
             all_aps.save(Path(custom_ap_location_maps / floor['name']).with_suffix('.png'))
         except Exception as e:
-            print("CAPTURED ERROR Error saving output image: {e}")
+            print('checkpoint 2')
             wx.CallAfter(message_callback, e)
 
     try:
         shutil.rmtree(temp_dir)
         wx.CallAfter(message_callback, f'{nl}### PROCESS COMPLETE ###{nl}')
     except Exception as e:
+        print('checkpoint 3')
         wx.CallAfter(message_callback, e)
