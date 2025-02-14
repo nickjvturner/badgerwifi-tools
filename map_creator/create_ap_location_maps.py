@@ -147,7 +147,7 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
             wx.CallAfter(message_callback, e)
 
     try:
-        shutil.rmtree(temp_dir)
+        # shutil.rmtree(temp_dir)
         wx.CallAfter(message_callback, f'{nl}### PROCESS COMPLETE ###{nl}')
     except Exception as e:
         print('checkpoint 3')
