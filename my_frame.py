@@ -923,7 +923,7 @@ class MyFrame(wx.Frame):
         if not self.basic_checks():
             return
         if hasattr(self, 'current_project_profile_module'):
-            create_ap_list(self.working_directory, self.project_name, self.append_message, self.current_profile_ap_list_module.create_custom_ap_list)
+            create_ap_list(self)
 
     def on_copy_log(self, event):
         if wx.TheClipboard.Open():

@@ -1,3 +1,4 @@
+import re
 import pandas as pd
 from pathlib import Path
 
@@ -37,9 +38,12 @@ def format_headers(df, writer):
         worksheet.write(0, idx, col, header_format)
 
 
-def create_ap_list(working_directory, project_name, message_callback, create_custom_ap_list):
-    message_callback(f'Generating BoM XLSX for: {project_name}\n')
-    project_dir = Path(working_directory) / project_name
+def create_ap_list(project_object):
+
+    message_callback = project_object.append_message
+
+    message_callback(f'Generating BoM XLSX for: {project_object.project_name}\n')
+    project_dir = Path(project_object.working_directory) / project_object.project_name
 
     # Load JSON data
     floor_plans_json = load_json(project_dir, 'floorPlans.json', message_callback)
@@ -56,19 +60,34 @@ def create_ap_list(working_directory, project_name, message_callback, create_cus
     antenna_types_dict = create_antenna_types_dict(antenna_types_json)
     notes_dict = create_notes_dict(notes_json)
 
-    custom_ap_list = create_custom_ap_list(access_points_json, floor_plans_dict, tag_keys_dict, simulated_radio_dict, antenna_types_dict, notes_dict)
+    custom_ap_list = project_object.current_profile_ap_list_module.create_custom_ap_list(access_points_json, floor_plans_dict, tag_keys_dict, simulated_radio_dict, antenna_types_dict, notes_dict)
 
     # Create a pandas dataframe and export to Excel
     df = pd.DataFrame(custom_ap_list)
-    output_filename = f'{project_dir} - AP List.xlsx'
+
+    # Extract version number (e.g., "v1.3") if present
+    match = re.search(r'v\d+\.\d+', project_object.project_name)
+    if match:
+        version = match.group(0)
+
+        # Remove version from project_name
+        project_name_cleaned = re.sub(r' - predictive design v\d+\.\d+', '', project_object.project_name)
+
+        # Construct the new filename format
+        output_filename = f'{project_name_cleaned} - AP List {version}.xlsx' if version else f'{project_name_cleaned} - AP List.xlsx'
+
+    else:
+        message_callback('### ERROR: Unable to find expected pattern in project file name, substituting with default output name ###')
+        output_filename = f'{project_object.project_name} - AP List.xlsx'
 
     try:
-        writer = pd.ExcelWriter(output_filename, engine='xlsxwriter')
-        df.to_excel(writer, sheet_name='AP List', index=False)
-        adjust_column_widths(df, writer)
-        format_headers(df, writer)
-        writer.close()
+        with pd.ExcelWriter(Path(project_object.working_directory / output_filename), engine='xlsxwriter') as writer:
+            df.to_excel(writer, sheet_name='AP List', index=False)
+            adjust_column_widths(df, writer)
+            format_headers(df, writer)
+
         message_callback(f'{nl}"{Path(output_filename).name}" created successfully{nl}{nl}### PROCESS COMPLETE ###')
+
     except Exception as e:
-        print(e)
-        message_callback(f'{nl}### ERROR: Unable to create "{output_filename}" ###{nl}file could be open in another application{nl}### PROCESS INCOMPLETE ###')
+        error_msg = f"Error: {str(e)}"
+        message_callback(f'{nl}### ERROR: Failed to create output file ###{nl}{error_msg}{nl}### PROCESS INCOMPLETE ###')
