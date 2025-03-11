@@ -36,9 +36,15 @@ def export_note_images(working_directory, project_name, message_callback):
 
 	# Create a list of all noteIds that are associated with an AP
 	ap_note_ids = []
-	for ap in access_points_json['accessPoints']:
-		if 'noteIds' in ap.keys() and len(ap['noteIds']) > 0:
-			ap_note_ids.append(ap['noteIds'][0])
+
+	# Check if the accessPoints.json file is not empty
+	if access_points_json:
+		for ap in access_points_json['accessPoints']:
+			if 'noteIds' in ap.keys() and len(ap['noteIds']) > 0:
+				ap_note_ids.append(ap['noteIds'][0])
+
+	else:
+		message_callback(f'No access points found in the project{nl}')
 
 	message_callback(f'Extracting Images from: {project_name} notes')
 
