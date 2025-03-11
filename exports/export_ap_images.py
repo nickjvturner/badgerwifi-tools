@@ -30,6 +30,10 @@ def export_ap_images(working_directory, project_name, message_callback):
         wx.CallAfter(message_callback, f'No notes found in the project{nl}')
         return
 
+    if not access_points_json:
+        wx.CallAfter(message_callback, f'No access points found in the project{nl}')
+        return
+
     wx.CallAfter(message_callback, f'Extracting AP Images from: {project_name}{nl}')
 
     image_extraction_counter = []
