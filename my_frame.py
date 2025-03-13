@@ -676,12 +676,12 @@ class MyFrame(wx.Frame):
 
     def on_create_surveyed_ap_list(self, event):
         if not hasattr(self.current_profile_ap_list_module, 'create_custom_measured_ap_list'):
-            self.append_message("Currently selected project profile has no survey ap list export definition.")
+            self.append_message("Currently selected project profile has no surveyed ap list export definition.")
             return
         elif not self.basic_checks():
             return
         else:
-            create_surveyed_ap_list(self.working_directory, self.project_name, self.current_profile_ap_list_module.create_custom_measured_ap_list, self.append_message)
+            create_surveyed_ap_list(self)
 
     def on_admin_actions_dropdown_selection(self, event):
         selected_index = self.admin_actions_dropdown.GetSelection()

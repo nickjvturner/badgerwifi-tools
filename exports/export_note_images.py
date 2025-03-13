@@ -19,6 +19,13 @@ from common import nl
 def export_note_images(working_directory, project_name, message_callback):
 	project_dir = Path(working_directory) / project_name
 
+	access_points_json = load_json(project_dir, 'accessPoints.json', message_callback)
+	notes_json = load_json(project_dir, 'notes.json', message_callback)
+
+	if not notes_json:
+		message_callback(f'No notes found in the project{nl}')
+		return
+
 	# Create directory to hold output directories
 	output_dir = working_directory / 'OUTPUT'
 	output_dir.mkdir(parents=True, exist_ok=True)
@@ -26,13 +33,6 @@ def export_note_images(working_directory, project_name, message_callback):
 	# Create subdirectory for note images
 	note_images_dir = output_dir / 'note images'
 	note_images_dir.mkdir(parents=True, exist_ok=True)
-
-	access_points_json = load_json(project_dir, 'accessPoints.json', message_callback)
-	notes_json = load_json(project_dir, 'notes.json', message_callback)
-
-	if not notes_json:
-		message_callback(f'No notes found in the project{nl}')
-		return
 
 	# Create a list of all noteIds that are associated with an AP
 	ap_note_ids = []
@@ -51,32 +51,34 @@ def export_note_images(working_directory, project_name, message_callback):
 	image_extraction_counter = []
 
 	for note in notes_json['notes']:
-		if note['id'] not in ap_note_ids:
-			# Skip notes that do not contain images
-			if len(note['imageIds']) > 0:
-				image_count = 1
+		if note['id'] not in ap_note_ids or note['id'] in ap_note_ids:
+			# Skip notes that do not contain images and are associated with an AP
+			continue
 
-				for image in note['imageIds']:
-					image = 'image-' + image
-					image_full_path = project_dir / image
+		if len(note['imageIds']) > 0:
+			image_count = 1
 
-					# Process the createdAt stamp to make it filename friendly
-					created_at = datetime.fromisoformat((note['history']['createdAt']).replace('Z', '+00:00')).strftime(f"%Y-%m-%d__%H-%M-%S")
+			for image in note['imageIds']:
+				image = 'image-' + image
+				image_full_path = project_dir / image
 
-					if len(note['imageIds']) > 1:
-						# there must be more than 1 image, add '-1', '-2', '-3', etc
-						note_image_name = f"{created_at}-{str(image_count)}.png"
-					else:
-						note_image_name = f"{created_at}.png"
+				# Process the createdAt stamp to make it filename friendly
+				created_at = datetime.fromisoformat((note['history']['createdAt']).replace('Z', '+00:00')).strftime(f"%Y-%m-%d__%H-%M-%S")
 
-					dst = note_images_dir / note_image_name
+				if len(note['imageIds']) > 1:
+					# there must be more than 1 image, add '-1', '-2', '-3', etc
+					note_image_name = f"{created_at}-{str(image_count)}.png"
+				else:
+					note_image_name = f"{created_at}.png"
 
-					# count total number of APs extracted
-					image_extraction_counter.append(note_image_name)
+				dst = note_images_dir / note_image_name
 
-					shutil.copy(image_full_path, dst)
-					message_callback(f"{image} extracted as {note_image_name}")
+				# count total number of APs extracted
+				image_extraction_counter.append(note_image_name)
 
-					image_count += 1
+				shutil.copy(image_full_path, dst)
+				message_callback(f"{image} extracted as {note_image_name}")
+
+				image_count += 1
 
 	message_callback(f'{nl}{len(image_extraction_counter)} images extracted{nl}')
