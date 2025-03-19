@@ -1104,7 +1104,7 @@ class MyFrame(wx.Frame):
     def on_export_ap_images(self, event):
         if not self.basic_checks():
             return
-        export_ap_images.export_ap_images(self.working_directory, self.project_name, self.append_message)
+        export_ap_images.export_ap_images(self)
 
     def on_export_map_note_images(self, event):
         if not self.basic_checks():

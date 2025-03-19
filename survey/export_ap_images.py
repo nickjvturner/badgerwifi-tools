@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 """
-The original, well written script by Francois Verges (@VergesFrancois)
+Credit to Francois Verges (@VergesFrancois) for the original script and inspiration.
 Adapted, modified, mangled by Nick Turner (@nickjvturner)
 """
+
 import wx
 import shutil
 
@@ -12,16 +13,10 @@ from common import nl
 from common import sanitize_string
 
 
-def export_ap_images(working_directory, project_name, message_callback):
-    project_dir = working_directory / project_name
+def export_ap_images(project_object):
+    message_callback = project_object.append_message
 
-    # Create directory to hold output directories
-    output_dir = working_directory / 'OUTPUT'
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Create subdirectory for note images
-    ap_images_dir = output_dir / 'AP images'
-    ap_images_dir.mkdir(parents=True, exist_ok=True)
+    project_dir = project_object.working_directory / project_object.project_name
 
     access_points_json = load_json(project_dir, 'accessPoints.json', message_callback)
     notes_json = load_json(project_dir, 'notes.json', message_callback)
@@ -34,7 +29,15 @@ def export_ap_images(working_directory, project_name, message_callback):
         wx.CallAfter(message_callback, f'No access points found in the project{nl}')
         return
 
-    wx.CallAfter(message_callback, f'Extracting AP Images from: {project_name}{nl}')
+    wx.CallAfter(message_callback, f'Extracting AP Images from: {project_object.project_name}{nl}')
+
+    # Create directory to hold output directories
+    output_dir = project_object.working_directory / 'OUTPUT'
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create subdirectory for note images
+    ap_images_dir = output_dir / 'AP images'
+    ap_images_dir.mkdir(parents=True, exist_ok=True)
 
     image_extraction_counter = []
 
