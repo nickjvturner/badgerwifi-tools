@@ -27,8 +27,7 @@ from project_detail.Summarise import run as summarise_esx
 from rename_aps.rename_visualiser import visualise_ap_renaming
 from rename_aps.ap_renamer import ap_renamer
 
-from exports import export_ap_images
-from exports import export_note_images
+from survey import export_map_note_images, export_ap_images
 
 from map_creator.extract_blank_maps import extract_blank_maps
 from map_creator.create_ap_location_maps import create_custom_ap_location_maps_threaded
@@ -263,9 +262,9 @@ class MyFrame(wx.Frame):
         self.export_ap_images_button.Bind(wx.EVT_BUTTON, self.on_export_ap_images)
         self.export_ap_images_button.SetToolTip(wx.ToolTip("Images from within AP notes"))
 
-        self.export_note_images_button = wx.Button(self.tab3, label="Note Images")
-        self.export_note_images_button.Bind(wx.EVT_BUTTON, self.on_export_note_images)
-        self.export_note_images_button.SetToolTip(wx.ToolTip("Images from within map notes"))
+        self.export_map_note_images_button = wx.Button(self.tab3, label="Note Images")
+        self.export_map_note_images_button.Bind(wx.EVT_BUTTON, self.on_export_map_note_images)
+        self.export_map_note_images_button.SetToolTip(wx.ToolTip("Images from within map notes"))
 
         self.extract_blank_maps_button = wx.Button(self.tab2, label="Blank Maps")
         self.extract_blank_maps_button.Bind(wx.EVT_BUTTON, self.on_export_blank_maps)
@@ -545,7 +544,7 @@ class MyFrame(wx.Frame):
         # Row 2
         row_sizer = wx.BoxSizer(wx.HORIZONTAL)
         row_sizer.Add(self.export_ap_images_button, 0, wx.ALL, self.widget_margin)
-        row_sizer.Add(self.export_note_images_button, 0, wx.ALL, self.widget_margin)
+        row_sizer.Add(self.export_map_note_images_button, 0, wx.ALL, self.widget_margin)
         self.survey_export_section_sizer.Add(row_sizer, 0, wx.EXPAND | wx.LEFT, self.row_sizer_margin)
 
     def setup_tab4(self):
@@ -1107,10 +1106,10 @@ class MyFrame(wx.Frame):
             return
         export_ap_images.export_ap_images(self.working_directory, self.project_name, self.append_message)
 
-    def on_export_note_images(self, event):
+    def on_export_map_note_images(self, event):
         if not self.basic_checks():
             return
-        export_note_images.export_note_images(self.working_directory, self.project_name, self.append_message)
+        export_map_note_images.export_map_note_images(self)
 
     def on_export_pds_maps(self, event):
         if not self.basic_checks():
