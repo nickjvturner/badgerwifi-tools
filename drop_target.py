@@ -49,20 +49,11 @@ class DropTarget(wx.FileDropTarget):
                     if existing_file.lower().endswith('.esx'):
                         # There is already an .esx file in the list, show replace dialog
                         existing_esx_in_list = True  # Mark the file as processed
-                        if not Path(existing_file).exists():
-                            self.window.Delete(index)  # Remove the existing .esx file
-                            self.window.Append(filepath)  # Append the new one
-                            self.message_callback(f'{existing_file} replaced with {filepath}')
-                            self.esx_project_unpacked = False
-                            self.update_esx_project_unpacked_callback(False)
-
-                        elif self.show_replace_dialog(filepath):
-                            self.message_callback(f"{Path(self.window.GetStrings()[0]).name} removed.")
-                            self.window.Delete(index)  # Remove the existing .esx file
-                            self.window.Append(filepath)  # Append the new one
-                            self.message_callback(f"{Path(filepath).name} added to the list.")
-                            self.esx_project_unpacked = False
-                            self.update_esx_project_unpacked_callback(False)
+                        self.window.Delete(index)  # Remove the existing .esx file
+                        self.window.Append(filepath)  # Append the new one
+                        self.message_callback(f'{existing_file} replaced with {filepath}')
+                        self.esx_project_unpacked = False
+                        self.update_esx_project_unpacked_callback(False)
                         break  # Exit the loop after dealing with the first .esx file found
 
                 # If no existing .esx file was found or replacement was not approved, append the new file
@@ -87,12 +78,3 @@ class DropTarget(wx.FileDropTarget):
                 process_file(dropped_item)
 
         return True
-
-    def show_replace_dialog(self, filepath):
-        # Dialog asking if the user wants to replace the existing .esx file
-        dlg = wx.MessageDialog(self.window,
-                               f"A .esx file is already present. Do you want to replace it with {Path(filepath).name}?",
-                               "Replace File?", wx.YES_NO | wx.ICON_QUESTION)
-        result = dlg.ShowModal() == wx.ID_YES
-        dlg.Destroy()
-        return result
