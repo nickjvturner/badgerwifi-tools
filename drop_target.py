@@ -5,15 +5,15 @@ from pathlib import Path
 
 
 class DropTarget(wx.FileDropTarget):
-    def __init__(self, window, allowed_extensions, message_callback, esx_project_unpacked, update_esx_project_unpacked_callback, drop_target_label_callback):
+    def __init__(self, frame_object):
         super(DropTarget, self).__init__()
-        self.window = window
-        self.allowed_extensions = allowed_extensions
+        self.window = frame_object.list_box
+        self.allowed_extensions = frame_object.allowed_extensions
         self.ignored_extensions = ('.DS_Store')
-        self.message_callback = message_callback
-        self.esx_project_unpacked = esx_project_unpacked
-        self.update_esx_project_unpacked_callback = update_esx_project_unpacked_callback
-        self.drop_target_label_callback = drop_target_label_callback
+        self.message_callback = frame_object.append_message
+        self.esx_project_unpacked = frame_object.esx_project_unpacked
+        self.update_esx_project_unpacked_callback = frame_object.update_esx_project_unpacked
+        self.drop_target_label_callback = frame_object.drop_target_label_callback
 
     def OnDragOver(self, x, y, d):
         # This method can be used to provide feedback while moving over the target

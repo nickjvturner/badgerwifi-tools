@@ -716,8 +716,8 @@ class MyFrame(wx.Frame):
 
     def setup_drop_target(self):
         """Set up the drop target for the list box."""
-        allowed_extensions = (".esx", ".docx", ".xlsx")  # Define allowed file extensions
-        drop_target = DropTarget(self.list_box, allowed_extensions, self.append_message, self.esx_project_unpacked, self.update_esx_project_unpacked, self.drop_target_label_callback)
+        self.allowed_extensions = (".esx")  # Define allowed file extensions
+        drop_target = DropTarget(self)
         self.list_box.SetDropTarget(drop_target)
 
     def append_message(self, message):
