@@ -717,8 +717,8 @@ class MyFrame(wx.Frame):
     def setup_drop_target(self):
         """Set up the drop target for the list box."""
         self.allowed_extensions = (".esx")  # Define allowed file extensions
-        drop_target = DropTarget(self)
-        self.list_box.SetDropTarget(drop_target)
+        self.drop_target = DropTarget(self)
+        self.list_box.SetDropTarget(self.drop_target)
 
     def append_message(self, message):
         # Append a message to the message display area.
@@ -823,56 +823,13 @@ class MyFrame(wx.Frame):
         self.display_log.SetValue("")  # Clear the contents of the display_log
 
     def on_add_file(self, event):
-        existing_files = self.list_box.GetStrings()  # Get currently listed files
-
-        wildcard = "Ekahau Project file (*.esx)|*.esx|Microsoft Word document (*.docx)|*.docx"
+        wildcard = "Ekahau Project file (*.esx)|*.esx"
         dlg = wx.FileDialog(self, "Choose a file", wildcard=wildcard,
                             style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE)
         if dlg.ShowModal() == wx.ID_OK:
             filepaths = dlg.GetPaths()
             for filepath in filepaths:
-                if "re-zip" in filepath:
-                    self.append_message(f"{Path(filepath).name} cannot be added because it contains 're-zip' in the name.")
-                    continue
-
-                if filepath in existing_files:
-                    self.append_message(f"{Path(filepath).name} is already in the list.")
-                    continue
-
-                if filepath.lower().endswith('.esx'):
-                    # Initialize a flag to track if the .esx file is replaced or added
-                    existing_esx_in_list = False
-
-                    # Check if there is an existing .esx file in the list
-                    for index, existing_file in enumerate(existing_files):
-                        if existing_file.lower().endswith('.esx'):
-                            # There is already an .esx file in the list, show replace dialog
-                            existing_esx_in_list = True  # Mark the file as processed
-                            if not Path(existing_file).exists():
-                                self.list_box.Delete(index)  # Remove the existing .esx file
-                                self.list_box.Append(filepath)  # Append the new one
-                                self.append_message(f'{existing_file} replaced with {filepath}')
-                                self.esx_project_unpacked = False
-
-                            elif self.show_replace_dialog(filepath):
-                                self.append_message(f"{Path(self.list_box.GetStrings()[0]).name} removed.")
-                                self.list_box.Delete(index)  # Remove the existing .esx file
-                                self.list_box.Append(filepath)  # Append the new one
-                                self.append_message(f"{Path(filepath).name} added to the list.")
-                                self.esx_project_unpacked = False
-
-                    # If no existing .esx file was found or replacement was not approved, append the new file
-                    if not existing_esx_in_list:
-                        self.list_box.Append(filepath)
-                        self.append_message(f"{Path(filepath).name} added to the list.")
-
-                if filepath.lower().endswith('.docx'):
-                    self.list_box.Append(filepath)
-                    self.append_message(f"{Path(filepath).name} added to the list.")
-
-                if self.list_box.GetCount() > 0:
-                    self.drop_target_label.Hide()
-
+                self.drop_target.process_file(filepath)
         dlg.Destroy()
 
     def on_delete_key(self, event):
