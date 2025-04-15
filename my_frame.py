@@ -896,18 +896,6 @@ class MyFrame(wx.Frame):
         self.Close()
         self.Destroy()
 
-    def get_multiple_specific_file_type(self, extension):
-        filepaths = []
-        for filepath in self.list_box.GetStrings():
-            if filepath.lower().endswith(extension):
-                filepaths.append(filepath)
-
-        if filepaths:
-            return filepaths
-
-        self.append_message(f"No file with {extension} present in file list.")
-        return None
-
     def get_single_specific_file_type(self, extension):
         for filepath in self.list_box.GetStrings():
             if filepath.lower().endswith(extension):
