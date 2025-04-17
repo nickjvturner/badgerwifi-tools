@@ -22,21 +22,22 @@ from map_creator.map_creator_comon import add_project_filename_to_map
 CUSTOM_AP_ICON_SIZE_ADJUSTER = 4.87
 
 
-def create_custom_ap_location_maps_threaded(working_directory, project_name, message_callback, custom_ap_icon_size, ap_name_label_size, stop_event):
+def create_custom_ap_location_maps_threaded(self):
     # Wrapper function to run insert_images in a separate thread
     def run_in_thread():
-        create_ap_location_maps(working_directory, project_name, message_callback, custom_ap_icon_size, ap_name_label_size, stop_event)
+        create_ap_location_maps(self)
     # Start the long-running task in a separate thread
     threading.Thread(target=run_in_thread).start()
 
 
-def create_ap_location_maps(working_directory, project_name, message_callback, custom_ap_icon_size, ap_name_label_size, stop_event):
-    wx.CallAfter(message_callback, f'Creating custom AP location maps for: {project_name}{nl}'
-                                   f'Custom AP icon size: {custom_ap_icon_size}{nl}')
+def create_ap_location_maps(self):
+    message_callback = self.append_message
+    wx.CallAfter(message_callback, f'Creating custom AP location maps for: {self.project_name}{nl}'
+                                   f'Custom AP icon size: {self.ap_icon_size}{nl}')
 
-    custom_ap_icon_size = int(custom_ap_icon_size * CUSTOM_AP_ICON_SIZE_ADJUSTER)
+    custom_ap_icon_size = int(self.ap_icon_size * CUSTOM_AP_ICON_SIZE_ADJUSTER)
 
-    project_dir = Path(working_directory) / project_name
+    project_dir = Path(self.working_directory) / self.project_name
 
     # Load JSON data
     floor_plans_json = load_json(project_dir, 'floorPlans.json', message_callback)
@@ -48,7 +49,7 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
     simulated_radio_dict = create_simulated_radios_dict(simulated_radios_json)
 
     # Create directory to hold output directories
-    output_dir = working_directory / 'OUTPUT'
+    output_dir = self.working_directory / 'OUTPUT'
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Create subdirectory for Blank floor plans
@@ -64,7 +65,7 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
     temp_dir.mkdir(parents=True, exist_ok=True)
 
     for floor in sorted(floor_plans_json['floorPlans'], key=lambda i: i['name']):
-        if stop_event.is_set():
+        if self.stop_event.is_set():
             wx.CallAfter(message_callback, PROCESS_ABORTED)
             return
 
@@ -91,7 +92,7 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
         aps_on_this_floor = []
 
         for ap in sorted(access_points_json['accessPoints'], key=lambda i: i['name']):
-            if stop_event.is_set():
+            if self.stop_event.is_set():
                 wx.CallAfter(message_callback, PROCESS_ABORTED)
                 return
 
@@ -114,7 +115,7 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
                 blank_floor_plan = blank_floor_plan.crop(crop_bitmap)
 
             # Add project filename to blank map
-            blank_floor_plan = add_project_filename_to_map(blank_floor_plan, ap_name_label_size, project_name)
+            blank_floor_plan = add_project_filename_to_map(blank_floor_plan, self.ap_name_label_size, self.project_name)
             wx.CallAfter(message_callback, "Blank map stamped with project filename")
 
             # Save the blank floor plan
@@ -126,22 +127,27 @@ def create_ap_location_maps(working_directory, project_name, message_callback, c
         else:
             # Generate the all_aps map
             for ap in aps_on_this_floor:
-                if stop_event.is_set():
+                if self.stop_event.is_set():
                     wx.CallAfter(message_callback, PROCESS_ABORTED)
                     return
-                all_aps = annotate_map(current_map_image, ap, scaling_ratio, custom_ap_icon_size, ap_name_label_size, simulated_radio_dict, message_callback, floor_plans_dict)
+                all_aps = annotate_map(current_map_image, ap, scaling_ratio, custom_ap_icon_size, self.ap_name_label_size, simulated_radio_dict, message_callback, floor_plans_dict)
 
         # If map was cropped within Ekahau, crop the all_AP map
         if map_cropped_within_ekahau:
             all_aps = all_aps.crop(crop_bitmap)
 
         # add project filename to the output image
-        all_aps = add_project_filename_to_map(all_aps, ap_name_label_size, project_name)
+        all_aps = add_project_filename_to_map(all_aps, self.ap_name_label_size, self.project_name)
         wx.CallAfter(message_callback, "map stamped with project filename")
 
         # Save the output images
         try:
-            all_aps.save(Path(custom_ap_location_maps / floor['name']).with_suffix('.png'))
+            if self.project_metadata:
+                output_filename = f"{floor['name']} {self.project_version}.png"
+            else:
+                output_filename = f"{floor['name']}.png"
+
+            all_aps.save(custom_ap_location_maps / output_filename)
             wx.CallAfter(message_callback, f"Custom AP location map for {floor['name']} saved successfully")
         except Exception as e:
             wx.CallAfter(message_callback, ERROR)
