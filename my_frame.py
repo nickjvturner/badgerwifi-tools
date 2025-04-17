@@ -2,6 +2,7 @@
 
 import wx
 import os
+import re
 import json
 import threading
 import webbrowser
@@ -114,6 +115,12 @@ class MyFrame(wx.Frame):
         self.predictive_design_coverage_requirements = {}
         self.post_deployment_survey_expected_pattern = None
         self.post_deployment_survey_coverage_requirements = []
+
+        self.ignored_extensions = ('.DS_Store')
+        self.site_id = None
+        self.site_location = None
+        self.project_phase = None
+        self.project_version = None
 
         # Define the configuration directory path
         self.config_dir = Path(__file__).resolve().parent / CONFIGURATION_DIR
@@ -904,8 +911,10 @@ class MyFrame(wx.Frame):
                     if not self.filepath.exists():
                         self.append_message(f'The file {self.filepath} does not exist.')
                         return False
+
                     self.project_name = self.filepath.stem  # Set the project name based on the file stem
                     self.append_message(f'Project name: {self.project_name}')
+
                     self.working_directory = self.filepath.parent
                     self.append_message(f'Working directory: {self.working_directory}{nl}')
                 return True
@@ -1040,9 +1049,6 @@ class MyFrame(wx.Frame):
         short_description = getattr(module, 'SHORT_DESCRIPTION', "No short description available.")
         return script_name, short_description
 
-    def update_esx_project_unpacked(self, unpacked):
-        self.esx_project_unpacked = unpacked
-
     def placeholder(self, event):
         self.append_message(f'No action implemented yet')
 
@@ -1140,13 +1146,6 @@ class MyFrame(wx.Frame):
         # Check that working directory and project name directories exist
         if self.working_directory and (self.working_directory / self.project_name).exists():
             rebundle_project(self.working_directory, self.project_name, self.append_message)
-
-    def drop_target_label_callback(self, hide=False):
-        if hide:
-            self.drop_target_label.Hide()
-        else:
-            self.drop_target_label.Show()
-        self.panel.Refresh()  # Refresh the panel to reflect the change
 
     def basic_checks(self):
         if not self.esx_project_unpacked:
