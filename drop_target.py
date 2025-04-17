@@ -1,8 +1,9 @@
 # drop_target.py
 
 import wx
-import re
 from common import nl
+from common import HASH_BAR
+from common import parse_project_metadata
 from pathlib import Path
 
 
@@ -50,10 +51,10 @@ class DropTarget(wx.FileDropTarget):
                     if not Path(existing_file).exists():
                         self.window.Delete(index)
                         self.window.Append(str(filepath))
-                        self.message_callback(f"{existing_file} replaced with {filename}{nl}")
+                        self.message_callback(f"{HASH_BAR}{existing_file} replaced with {filename}{nl}")
                         self.frame.esx_project_unpacked = False
                     if self.show_replace_dialog(filepath):
-                        self.message_callback(f"{Path(existing_file).name} removed.")
+                        self.message_callback(f"{HASH_BAR}{Path(existing_file).name} removed.")
                         self.window.Delete(index)
                         self.window.Append(str(filepath))
                         self.message_callback(f"{filename} added to the list.{nl}")
@@ -66,38 +67,17 @@ class DropTarget(wx.FileDropTarget):
                 self.message_callback(f"{filename} added to the list.")
 
             project_name = filepath.stem
+            metadata = parse_project_metadata(project_name, self.frame.project_filename_expected_pattern)
 
-            self.frame.project_phase = None
-            self.frame.project_version = None
-            self.frame.site_reference = None
+            if not metadata:
+                self.message_callback(
+                    "Filename does not follow required convention for phase and version detection, you may proceed, but automated export filename generation will not be available.")
 
-            if self.frame.predictive_design_expected_pattern or self.frame.post_deployment_survey_expected_pattern:
-
-                pd_pattern = self.frame.predictive_design_expected_pattern
-                pds_pattern = self.frame.post_deployment_survey_expected_pattern
-
-                if pd_pattern and (match := re.search(pd_pattern, project_name)):
-                    self.frame.site_id = match.groupdict().get("site_id")
-                    self.frame.site_location = match.groupdict().get("site_location")
-                    self.frame.project_phase = 'Predictive Design'
-                    self.frame.project_version = match.groupdict().get("version")
-                elif pds_pattern and (match := re.search(pds_pattern, project_name)):
-                    self.frame.site_id = match.groupdict().get("site_id")
-                    self.frame.site_location = match.groupdict().get("site_location")
-                    self.frame.project_phase = 'Post-Deployment Survey'
-                    self.frame.project_version = match.groupdict().get("version")
-
-                else:
-                    self.message_callback(f"Filename does not follow required convention for phase and version detection, you may proceed, but automated export filename generation will not be available.")
-
-            if self.frame.site_id:
-                self.message_callback(f"Detected Site ID: {self.frame.site_id}")
-            if self.frame.site_location:
-                self.message_callback(f"Detected Site Location: {self.frame.site_location}")
-            if self.frame.project_phase:
-                self.message_callback(f"Detected Phase: {self.frame.project_phase}")
-            if self.frame.project_version:
-                self.message_callback(f"Detected Version: {self.frame.project_version}")
+            else:
+                self.message_callback(f"Detected Site ID: {metadata['site_id']}")
+                self.message_callback(f"Detected Site Location: {metadata['site_location']}")
+                self.message_callback(f"Detected Phase: {metadata['project_phase']}")
+                self.message_callback(f"Detected Version: {metadata['project_version']}")
 
         elif filepath.suffix.lower() == '.xlsx':
             self.window.Append(str(filepath))

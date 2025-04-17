@@ -823,3 +823,24 @@ def antenna_name_cleanup(antenna_name):
         antenna_name = antenna_name.replace(ref, "")
 
     return antenna_name
+
+
+def parse_project_metadata(filename, pattern=None):
+    result = {
+        "site_id": None,
+        "site_location": None,
+        "project_phase": None,
+        "project_version": None
+    }
+
+    if pattern and (match := re.search(pattern, filename)):
+        result.update({
+            "site_id": match.groupdict().get("site_id"),
+            "site_location": match.groupdict().get("site_location"),
+            "project_phase": match.groupdict().get("phase"),
+            "project_version": match.groupdict().get("version")
+        })
+    else:
+        result = None
+
+    return result

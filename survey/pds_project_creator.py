@@ -160,18 +160,14 @@ def create_pds_project_esx(self, message_callback):
             rebundled_file = temp_dir / rebundled_filename
 
             if rebundled_file.exists():
-                # Check if the expected pattern is found in the filename
-                if re.search(r' - predictive design v(\d+\.\d+)', self.project_name):
+                # Check if the expected pattern was found in the filename
+                if self.project_phase == 'Predictive Design':
                     # If pattern is found, apply the new naming convention
-                    post_deployment_filename = re.sub(
-                        r' - predictive design v(\d+\.\d+)',  # Match the version pattern
-                        r' - post-deployment v0.1',  # Replace with the new pattern
-                        self.project_name
-                    ) + '.esx'
+                    post_deployment_filename = f"{self.site_id} {self.site_location} - Post-Deployment v0.1.esx"
                 else:
                     # If pattern is not found, leave the rebundled filename unchanged
-                    wx.CallAfter(message_callback, f"'predictive design vx.x' pattern NOT found in source filename")
                     post_deployment_filename = f"{self.project_name}_re-zip.esx"
+                    wx.CallAfter(message_callback, f"Source filename not compliant with expected pattern, rebundled file will be named {post_deployment_filename}")
 
                 destination_path = self.working_directory / post_deployment_filename
 
