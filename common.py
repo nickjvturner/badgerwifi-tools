@@ -844,3 +844,14 @@ def parse_project_metadata(filename, pattern=None):
         result = None
 
     return result
+
+def cleanup_unpacked_project_folder(self):
+    """Remove the unpacked project folder on exit if it exists."""
+    if self.working_directory and self.project_name:
+        unpacked_path = self.working_directory / self.project_name
+        if unpacked_path.exists() and unpacked_path.is_dir():
+            try:
+                shutil.rmtree(unpacked_path)
+                print(f"Removed unpacked folder: {unpacked_path}")
+            except Exception as e:
+                print(f"Failed to remove unpacked folder: {e}")

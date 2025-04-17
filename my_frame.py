@@ -51,6 +51,7 @@ from common import tracked_project_profile_check_for_update
 from common import example_project_profile_names
 
 from common import parse_project_metadata
+from common import cleanup_unpacked_project_folder
 
 from admin import check_for_updates
 from admin.dir_creator import select_root_and_create_directory_structure
@@ -897,6 +898,7 @@ class MyFrame(wx.Frame):
         # Save the application state before exiting
         self.save_application_state(None)
         print(f'Application state saved on exit, file list and dropdown options should be the same next time you launch the application')
+        cleanup_unpacked_project_folder(self)
         self.Close()
         self.Destroy()
 
