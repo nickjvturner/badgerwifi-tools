@@ -519,7 +519,12 @@ def create_measured_radios_dict(measured_radios_json, access_point_measurements_
         for measurement_id in radio.get('accessPointMeasurementIds', []):
             access_point_measurement = access_point_measurements_dict.get(measurement_id)
             if access_point_measurement:
-                lowest_center_frequency = access_point_measurement.get('channelByCenterFrequencyDefinedNarrowChannels')[0]
+                lfc = access_point_measurement.get('channelByCenterFrequencyDefinedNarrowChannels')
+                if not lfc:
+                    print(f"Warning: No channelByCenterFrequencyDefinedNarrowChannels found for measurement ID {measurement_id}.")
+                    continue
+
+                lowest_center_frequency = lfc[0]
                 mac = access_point_measurement.get('mac')
                 access_point_id = radio['accessPointId']
 
