@@ -252,7 +252,7 @@ def load_json(project_dir: Path, filename: str, message_callback):
             return json.load(json_file)
     except FileNotFoundError:
         # print(f'{filename} not found, the project probably does not contain this data type.')
-        message_callback(f'{filename} not found, the project probably does not contain this data type.')
+        message_callback(f'{filename} not found, project does not contain this data type, continuing.')
         return None
     except UnicodeDecodeError as e:
         # print(f"Error decoding {filename}: {e}")
@@ -440,7 +440,7 @@ def create_custom_ap_dict(access_points_json, floor_plans_dict, simulated_radio_
         if ap_name in name_count:
             name_count[ap_name] += 1
             ap_name = f"{ap_name}_BW_DUPLICATE_AP_NAME_{name_count[ap_name]}"
-            # print(f"Duplicate AP name found: {ap['name']}, renamed to: {ap_name}")
+            print(f"Duplicate AP name found: {ap['name']}, renamed to: {ap_name}")
         else:
             name_count[ap_name] = 1
 
@@ -626,11 +626,11 @@ def decode_tx_power(ie_base64):
 
                 # The Transmit Power field is an unsigned integer representing dBm
                 tx_power = tx_power_field  # in dBm
-                print(f"Transmit Power: {tx_power} dBm")
+                # print(f"Transmit Power: {tx_power} dBm")
         index += length  # Move to the next IE
 
-    if tx_power is None:
-        print("Element ID 35 (TPC Report IE) not found or does not contain transmit power.")
+    # if tx_power is None:
+    #     print("Element ID 35 (TPC Report IE) not found or does not contain transmit power.")
     return tx_power
 
 
@@ -706,7 +706,7 @@ def decode_supported_data_rates(ie_base64):
     rates_output = ", ".join(rates_display)
 
     # Output the supported data rates
-    print(rates_output)
+    # print(rates_output)
 
     return rates_output
 
@@ -768,13 +768,12 @@ def decode_channel(ie_base64):
         if element_id == 3:
             if length >= 1:
                 channel = element_data[0]
-                print(f"Channel: {channel}")
-                # Optionally, you can return here if only one occurrence is expected
+                # print(f"Channel: {channel}")
                 # return channel
         index += length  # Move to the next IE
 
-    if channel is None:
-        print("Element ID 3 (DS Parameter Set) not found or does not contain channel information.")
+    # if channel is None:
+    #     print("Element ID 3 (DS Parameter Set) not found or does not contain channel information.")
     return channel
 
 
