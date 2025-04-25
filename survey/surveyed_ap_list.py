@@ -87,11 +87,11 @@ def format_headers(df, writer):
     worksheet.freeze_panes(1, 1)
 
 
-def create_surveyed_ap_list(project_object):
-    message_callback = project_object.append_message
+def create_surveyed_ap_list(self):
+    message_callback = self.append_message
 
-    message_callback(f'Generating surveyed AP list for: {project_object.project_name}\n')
-    project_dir = Path(project_object.working_directory) / project_object.project_name
+    message_callback(f'Generating surveyed AP list for: {self.project_name}\n')
+    project_dir = Path(self.working_directory) / self.project_name
 
     # Load JSON data
     floor_plans_json = load_json(project_dir, 'floorPlans.json', message_callback)
@@ -108,7 +108,7 @@ def create_surveyed_ap_list(project_object):
     measured_radios_dict = create_measured_radios_dict(measured_radios_json, access_point_measurements_dict)
     notes_dict = create_notes_dict(notes_json)
 
-    surveyed_ap_list = project_object.current_profile_ap_list_module.create_custom_measured_ap_list(access_points_json, floor_plans_dict, tag_keys_dict, measured_radios_dict, notes_dict)
+    surveyed_ap_list = self.current_profile_ap_list_module.create_custom_measured_ap_list(access_points_json, floor_plans_dict, tag_keys_dict, measured_radios_dict, notes_dict)
 
     # Create a pandas dataframe and export to Excel
     df = pd.DataFrame(surveyed_ap_list)
