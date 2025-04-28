@@ -113,15 +113,19 @@ def create_surveyed_ap_list(self):
     # Create a pandas dataframe and export to Excel
     df = pd.DataFrame(surveyed_ap_list)
 
-    output_filename = f'{project_dir} - Surveyed AP List.xlsx'
+    # Create directory to hold output
+    output_dir = self.working_directory / 'OUTPUT'
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    output_filename = output_dir / f'{self.project_name} - Surveyed AP List.xlsx'
 
     try:
-        writer = pd.ExcelWriter(output_filename, engine='xlsxwriter')
+        writer = pd.ExcelWriter(str(output_filename), engine='xlsxwriter')
         df.to_excel(writer, sheet_name='AP List', index=False)
         adjust_column_widths(df, writer)
         format_headers(df, writer)
         writer.close()
-        message_callback(f'{nl}"{Path(output_filename).name}" created successfully{nl}{nl}### PROCESS COMPLETE ###')
+        message_callback(f'{nl}"{output_filename.name}" created successfully{nl}{nl}### PROCESS COMPLETE ###')
     except Exception as e:
         print(e)
         message_callback(f'{nl}### ERROR: Unable to create "{output_filename}" ###{nl}file could be open in another application{nl}### PROCESS INCOMPLETE ###')
