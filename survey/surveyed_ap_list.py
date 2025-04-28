@@ -113,6 +113,32 @@ def create_surveyed_ap_list(self):
     # Create a pandas dataframe and export to Excel
     df = pd.DataFrame(surveyed_ap_list)
 
+    # Define SSID columns
+    ssid_columns = ['2.4 SSIDs', '5 SSIDs', '6 SSIDs']
+
+    # Helper function to clean SSID Series
+    def clean_ssids(series):
+        return (
+            series
+            .dropna()
+            .str.split('\n')
+            .explode()
+            .dropna()
+            .str.strip()
+            .str.replace(r'\s*\(.*?\)', '', regex=True)
+            .drop_duplicates()
+            .sort_values()
+        )
+
+    # Separate cleaned SSIDs
+    ssids_24 = clean_ssids(df['2.4 SSIDs']).to_frame(name='SSID')
+    ssids_5 = clean_ssids(df['5 SSIDs']).to_frame(name='SSID')
+    ssids_6 = clean_ssids(df['6 SSIDs']).to_frame(name='SSID')
+
+    # Merged cleaned SSIDs
+    all_ssids = pd.concat([ssids_24, ssids_5, ssids_6]).drop_duplicates().sort_values(by='SSID')
+    all_ssids = all_ssids.reset_index(drop=True)
+
     # Create directory to hold output
     output_dir = self.working_directory / 'OUTPUT'
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -121,9 +147,17 @@ def create_surveyed_ap_list(self):
 
     try:
         writer = pd.ExcelWriter(str(output_filename), engine='xlsxwriter')
+        # Sheet 1: Surveyed AP List
         df.to_excel(writer, sheet_name='AP List', index=False)
         adjust_column_widths(df, writer)
         format_headers(df, writer)
+
+        # Separate SSID Sheets
+        ssids_24.to_excel(writer, sheet_name='2.4GHz SSIDs', index=False)
+        ssids_5.to_excel(writer, sheet_name='5GHz SSIDs', index=False)
+        ssids_6.to_excel(writer, sheet_name='6GHz SSIDs', index=False)
+        all_ssids.to_excel(writer, sheet_name='All SSIDs', index=False)
+
         writer.close()
         message_callback(f'{nl}"{output_filename.name}" created successfully{nl}{nl}### PROCESS COMPLETE ###')
     except Exception as e:
