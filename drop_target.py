@@ -69,15 +69,18 @@ class DropTarget(wx.FileDropTarget):
             project_name = filepath.stem
             metadata = parse_project_metadata(project_name, self.frame.project_filename_expected_pattern)
 
-            if not metadata:
+            if not metadata or not any(metadata.values()):
                 self.message_callback(
                     "Filename does not follow required convention for phase and version detection, you may proceed, but automated export filename generation will not be available.")
 
-            else:
+            if metadata['site_id']:
                 self.message_callback(f"Detected Site ID: {metadata['site_id']}")
+            if metadata['site_location']:
                 self.message_callback(f"Detected Site Location: {metadata['site_location']}")
-                self.message_callback(f"Detected Phase: {metadata['project_phase']}")
-                self.message_callback(f"Detected Version: {metadata['project_version']}")
+            if metadata['project_phase']:
+                self.message_callback(f"Detected Project Phase: {metadata['project_phase']}")
+            if metadata['project_version']:
+                self.message_callback(f"Detected Project Version: {metadata['project_version']}")
 
         elif filepath.suffix.lower() == '.xlsx':
             self.window.Append(str(filepath))

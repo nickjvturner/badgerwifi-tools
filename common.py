@@ -844,8 +844,6 @@ def parse_project_metadata(filename, pattern=None):
             "project_phase": match.groupdict().get("phase"),
             "project_version": match.groupdict().get("version")
         })
-    else:
-        result = None
 
     return result
 
