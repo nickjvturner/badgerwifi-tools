@@ -148,7 +148,7 @@ def create_ap_location_maps(self):
                 output_filename = f"{floor['name']}.png"
 
             all_aps.save(custom_ap_location_maps / output_filename)
-            wx.CallAfter(message_callback, f"Custom AP location map for {floor['name']} saved successfully")
+            wx.CallAfter(message_callback, f"Custom AP location map for {floor['name']} saved successfully as {output_filename}")
         except Exception as e:
             wx.CallAfter(message_callback, ERROR)
             wx.CallAfter(message_callback, "Failure Attempting to save the OUTPUT images")
