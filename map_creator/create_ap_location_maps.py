@@ -142,7 +142,7 @@ def create_ap_location_maps(self):
 
         # Save the output images
         try:
-            if self.project_metadata and 'project_version' in self.project_metadata:
+            if self.project_version is not None:
                 output_filename = f"{floor['name']} {self.project_version}.png"
             else:
                 output_filename = f"{floor['name']}.png"
