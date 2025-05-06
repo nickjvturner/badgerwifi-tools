@@ -558,7 +558,9 @@ def get_ssid_and_mac(measured_radios):
     access_points = []
 
     for radio in measured_radios.values():
-        access_points.append((radio['mac'], radio['ssid']))
+        mac = radio.get('mac')
+        ssid = radio.get('ssid', 'no-value')  # Use 'no-value' if SSID is not found
+        access_points.append((mac, ssid))
 
     # Sort the access points by MAC address
     sorted_access_points = sorted(access_points)
