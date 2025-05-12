@@ -859,3 +859,60 @@ def cleanup_unpacked_project_folder(self):
                 print(f"Removed unpacked folder: {unpacked_path}")
             except Exception as e:
                 print(f"Failed to remove unpacked folder: {e}")
+
+
+def get_unlinked_note_ids(access_points_json, notes_dict):
+    # Step 1: collect all note IDs referenced by access points
+    linked_note_ids = set()
+    for ap in access_points_json['accessPoints']:
+        note_ids = ap.get('noteIds', [])
+        linked_note_ids.update(note_ids)
+
+    # Step 2: collect all note IDs from notes_dict
+    all_note_ids = set(notes_dict.keys())
+
+    # Step 3: find the difference
+    unlinked_note_ids = all_note_ids - linked_note_ids
+
+    return list(unlinked_note_ids)
+
+def process_map_notes(map_notes):
+    cleaned_map_notes = []
+
+    for note in map_notes:
+        cleaned_map_notes.append({
+            'Created At': note.get('history', {}).get('createdAt'),
+            'Notes': note.get('text'),
+            'Image Count': len(note.get('imageIds', [])),
+            'Created By': note.get('history', {}).get('createdBy'),
+            'Note ID': note.get('id'),
+            'Status': note.get('status')
+        })
+
+    return cleaned_map_notes
+
+
+def flatten_picture_notes_hierarchical(picture_notes_json, notes_dict):
+    flattened = []
+
+    for picture_note in picture_notes_json.get('pictureNotes', []):
+        floor_plan_id = picture_note.get('location', {}).get('floorPlanId')
+        x = picture_note.get('location', {}).get('coord', {}).get('x')
+        y = picture_note.get('location', {}).get('coord', {}).get('y')
+        note_ids = picture_note.get('noteIds', [])
+
+        for i, note_id in enumerate(note_ids):
+            note = notes_dict.get(note_id, {})
+            flattened.append({
+                'Floor Plan ID': floor_plan_id if i == 0 else '',
+                'X': x if i == 0 else '',
+                'Y': y if i == 0 else '',
+                'Created At': note.get('history', {}).get('createdAt'),
+                'Notes': note.get('text'),
+                '': '',
+                'Created By': note.get('history', {}).get('createdBy'),
+                'Status': note.get('status'),
+                'Note ID': note_id,
+            })
+
+    return flattened

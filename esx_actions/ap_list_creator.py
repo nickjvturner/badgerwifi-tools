@@ -8,13 +8,16 @@ from common import create_tag_keys_dict
 from common import create_simulated_radios_dict
 from common import create_notes_dict
 from common import create_antenna_types_dict
+from common import get_unlinked_note_ids
+from common import process_map_notes
+from common import flatten_picture_notes_hierarchical
 
 nl = '\n'
 
 
-def adjust_column_widths(df, writer):
-    """Adjust column widths in the Excel sheet and apply text wrap to the 'Notes' column."""
-    worksheet = writer.sheets['AP List']
+def adjust_column_widths(df, writer, sheet_name):
+    """Adjust column widths and apply text wrap to the 'Notes' column."""
+    worksheet = writer.sheets[sheet_name]
     # Create a format for wrapping text
     wrap_format = writer.book.add_format({'text_wrap': True})
 
@@ -27,9 +30,9 @@ def adjust_column_widths(df, writer):
             worksheet.set_column(idx, idx, column_len * 1.2)
 
 
-def format_headers(df, writer):
-    """Format header row in the Excel sheet."""
-    worksheet = writer.sheets['AP List']
+def format_headers(df, writer, sheet_name):
+    """Format header row in the specified Excel sheet."""
+    worksheet = writer.sheets[sheet_name]
     header_format = writer.book.add_format(
         {'bold': True, 'valign': 'center', 'font_size': 16, 'border': 0})
 
@@ -63,7 +66,23 @@ def create_ap_list(project_object):
     custom_ap_list = project_object.current_profile_ap_list_module.create_custom_ap_list(access_points_json, floor_plans_dict, tag_keys_dict, simulated_radio_dict, antenna_types_dict, notes_dict)
 
     # Create a pandas dataframe and export to Excel
-    df = pd.DataFrame(custom_ap_list)
+    ap_df = pd.DataFrame(custom_ap_list)
+    map_note_df = None
+
+    # Check for unlinked notes
+    map_note_ids = get_unlinked_note_ids(access_points_json, notes_dict)
+
+    map_note_list = []
+
+    for note_id, note in notes_dict.items():
+        if note_id in map_note_ids:
+            map_note_list.append(note)
+
+    if map_note_list:
+        cleaned_map_notes = process_map_notes(map_note_list)
+        map_note_df = pd.DataFrame(cleaned_map_notes)
+
+
 
     if project_object.project_version is not None:
         # Construct the new filename format
@@ -75,9 +94,14 @@ def create_ap_list(project_object):
 
     try:
         with pd.ExcelWriter(Path(project_object.working_directory / output_filename), engine='xlsxwriter') as writer:
-            df.to_excel(writer, sheet_name='AP List', index=False)
-            adjust_column_widths(df, writer)
-            format_headers(df, writer)
+            ap_df.to_excel(writer, sheet_name='AP List', index=False)
+            adjust_column_widths(ap_df, writer, 'AP List')
+            format_headers(ap_df, writer, 'AP List')
+
+            if map_note_df is not None and not map_note_df.empty:
+                map_note_df.to_excel(writer, sheet_name='Map Notes', index=False)
+                adjust_column_widths(map_note_df, writer, 'Map Notes')
+                format_headers(map_note_df, writer, 'Map Notes')
 
         message_callback(f'{nl}"{Path(output_filename).name}" created successfully{nl}{nl}### PROCESS COMPLETE ###')
 
