@@ -65,19 +65,12 @@ def create_ap_list(project_object):
     # Create a pandas dataframe and export to Excel
     df = pd.DataFrame(custom_ap_list)
 
-    # Extract version number (e.g., "v1.3") if present
-    match = re.search(r'v\d+\.\d+', project_object.project_name)
-    if match:
-        version = match.group(0)
-
-        # Remove version from project_name
-        project_name_cleaned = re.sub(r' - predictive design v\d+\.\d+', '', project_object.project_name)
-
+    if project_object.project_version is not None:
         # Construct the new filename format
-        output_filename = f'{project_name_cleaned} - AP List {version}.xlsx' if version else f'{project_name_cleaned} - AP List.xlsx'
+        output_filename = f'{project_object.site_id} {project_object.site_location} - AP List {project_object.project_version}.xlsx'
 
     else:
-        message_callback('### ERROR: Unable to find expected pattern in project file name, substituting with default output name ###')
+        message_callback('### WARNING: Project metadata not detected, using default output name ###')
         output_filename = f'{project_object.project_name} - AP List.xlsx'
 
     try:
