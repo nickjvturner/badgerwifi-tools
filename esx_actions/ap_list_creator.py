@@ -8,37 +8,10 @@ from common import create_tag_keys_dict
 from common import create_simulated_radios_dict
 from common import create_notes_dict
 from common import create_antenna_types_dict
-from common import get_unlinked_note_ids
-from common import process_map_notes
 from common import flatten_picture_notes_hierarchical
-
-nl = '\n'
-
-
-def adjust_column_widths(df, writer, sheet_name):
-    """Adjust column widths and apply text wrap to the 'Notes' column."""
-    worksheet = writer.sheets[sheet_name]
-    # Create a format for wrapping text
-    wrap_format = writer.book.add_format({'text_wrap': True})
-
-    for idx, col in enumerate(df.columns):
-        column_len = max(df[col].astype(str).map(len).max(), len(col)) + 5
-        # Check if the current column is 'Notes' to apply text wrap format
-        if col == 'Notes':
-            worksheet.set_column(idx, idx, column_len * 1.2, wrap_format)
-        else:
-            worksheet.set_column(idx, idx, column_len * 1.2)
-
-
-def format_headers(df, writer, sheet_name):
-    """Format header row in the specified Excel sheet."""
-    worksheet = writer.sheets[sheet_name]
-    header_format = writer.book.add_format(
-        {'bold': True, 'valign': 'center', 'font_size': 16, 'border': 0})
-
-    for idx, col in enumerate(df.columns):
-        # Write the header with custom format
-        worksheet.write(0, idx, col, header_format)
+from common import nl
+from common import adjust_column_widths
+from common import format_headers
 
 
 def create_ap_list(project_object):
@@ -67,21 +40,15 @@ def create_ap_list(project_object):
 
     # Create a pandas dataframe and export to Excel
     ap_df = pd.DataFrame(custom_ap_list)
+
     map_note_df = None
 
-    # Check for unlinked notes
-    map_note_ids = get_unlinked_note_ids(access_points_json, notes_dict)
+    # Check if pictureNotes.json exists
+    picture_notes_json = load_json(project_dir, 'pictureNotes.json', message_callback)
 
-    map_note_list = []
-
-    for note_id, note in notes_dict.items():
-        if note_id in map_note_ids:
-            map_note_list.append(note)
-
-    if map_note_list:
-        cleaned_map_notes = process_map_notes(map_note_list)
-        map_note_df = pd.DataFrame(cleaned_map_notes)
-
+    if picture_notes_json is not None:
+        map_notes = flatten_picture_notes_hierarchical(picture_notes_json, notes_dict, floor_plans_dict)
+        map_note_df = pd.DataFrame(map_notes)
 
 
     if project_object.project_version is not None:
