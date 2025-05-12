@@ -907,22 +907,43 @@ def flatten_picture_notes_hierarchical(picture_notes_json, notes_dict, floor_pla
     flattened.sort(key=lambda n: (n.get('Floor Plan Name', ''), n.get('Created At', '')))
     return flattened
 
-def adjust_column_widths(df, writer, sheet_name):
+
+def adjust_column_widths(df, writer, sheet_name, right_align_cols=(), narrow_fixed_width_cols=(), wide_fixed_width_cols=()):
     """Adjust column widths and apply text wrap to the 'Notes' column."""
     worksheet = writer.sheets[sheet_name]
-    # Create a format for wrapping text
-    wrap_format = writer.book.add_format({'text_wrap': True})
+
+    # Create a default column formatting style, vertical align top, no text wrap
+    left_align = writer.book.add_format({'valign': 'top'})
+
+    # Create specialised column text formatting styles
+    left_align_wrap = writer.book.add_format({'text_wrap': True, 'valign': 'top'})
+    right_align_wrap = writer.book.add_format({'text_wrap': True, 'valign': 'top', 'align': 'right'})
 
     for idx, col in enumerate(df.columns):
         column_len = max(df[col].astype(str).map(len).max(), len(col)) + 5
-        # Check if the current column is 'Notes' to apply text wrap format
-        if col == 'Notes':
-            worksheet.set_column(idx, idx, column_len * 1.2, wrap_format)
+
+        # Check if the current column is one we want to wrap
+        if col in right_align_cols:
+            max_line_len = df[col].astype(str).apply(lambda x: max(len(line) for line in x.split('\n'))).max()
+            column_len = max(max_line_len, len(col)) - 1
+            worksheet.set_column(idx, idx, column_len, right_align_wrap)
+
+        elif col in narrow_fixed_width_cols:
+            column_len = 18
+            worksheet.set_column(idx, idx, column_len, right_align_wrap)
+
+        elif col in wide_fixed_width_cols:
+            column_len = 30
+            worksheet.set_column(idx, idx, column_len, right_align_wrap)
+
+        elif col == 'Notes':
+            worksheet.set_column(idx, idx, column_len, left_align_wrap)
+
         else:
-            worksheet.set_column(idx, idx, column_len * 1.2)
+            worksheet.set_column(idx, idx, column_len, left_align)
 
 
-def format_headers(df, writer, sheet_name):
+def format_headers(df, writer, sheet_name, freeze_row=True, freeze_col=True):
     """Format header row in the specified Excel sheet."""
     worksheet = writer.sheets[sheet_name]
     header_format = writer.book.add_format(
@@ -931,3 +952,12 @@ def format_headers(df, writer, sheet_name):
     for idx, col in enumerate(df.columns):
         # Write the header with custom format
         worksheet.write(0, idx, col, header_format)
+
+    # Freeze the header row and the first column
+    # Freeze the header row and/or the first column as specified
+    if freeze_row and freeze_col:
+        worksheet.freeze_panes(1, 1)
+    elif freeze_row:
+        worksheet.freeze_panes(1, 0)
+    elif freeze_col:
+        worksheet.freeze_panes(0, 1)

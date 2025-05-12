@@ -1,4 +1,3 @@
-import re
 import pandas as pd
 from pathlib import Path
 
@@ -8,11 +7,14 @@ from common import create_tag_keys_dict
 from common import create_access_point_measurements_dict
 from common import create_measured_radios_dict
 from common import create_notes_dict
+from common import adjust_column_widths
+from common import format_headers
+from common import flatten_picture_notes_hierarchical
 
 from common import nl
 
-channel_bands = ['2.4', '5', '6']
 
+channel_bands = ['2.4', '5', '6']
 
 right_align_cols =\
     (
@@ -37,54 +39,8 @@ wide_fixed_width_cols =\
         ['flagged as My AP', 'manually positioned']
     )
 
-
-def adjust_column_widths(df, writer):
-    """Adjust column widths in the Excel sheet and apply text wrap to the 'Notes' column."""
-    worksheet = writer.sheets['AP List']
-
-    # Create column text formatting styles
-    left_align_wrap = writer.book.add_format({'text_wrap': True, 'valign': 'top'})
-    right_align_wrap = writer.book.add_format({'text_wrap': True, 'valign': 'top', 'align': 'right'})
-
-    # Create a format for aligning to the top without wrapping
-    left_align = writer.book.add_format({'valign': 'top'})
-
-    for idx, col in enumerate(df.columns):
-        column_len = max(df[col].astype(str).map(len).max(), len(col)) + 1
-
-        # Check if the current column is one we want to wrap
-        if col in right_align_cols:
-            max_line_len = df[col].astype(str).apply(lambda x: max(len(line) for line in x.split('\n'))).max()
-            column_len = max(max_line_len, len(col)) - 1
-            worksheet.set_column(idx, idx, column_len, right_align_wrap)
-
-        elif col in narrow_fixed_width_cols:
-            column_len = 18
-            worksheet.set_column(idx, idx, column_len, right_align_wrap)
-
-        elif col in wide_fixed_width_cols:
-            column_len = 30
-            worksheet.set_column(idx, idx, column_len, right_align_wrap)
-
-        elif col == 'Notes':
-            worksheet.set_column(idx, idx, column_len, left_align_wrap)
-
-        else:
-            worksheet.set_column(idx, idx, column_len, left_align)
-
-
-def format_headers(df, writer):
-    """Format header row in the Excel sheet."""
-    worksheet = writer.sheets['AP List']
-    header_format = writer.book.add_format(
-        {'bold': True, 'valign': 'center', 'font_size': 16, 'border': 0})
-
-    for idx, col in enumerate(df.columns):
-        # Write the header with custom format
-        worksheet.write(0, idx, col, header_format)
-
-    # Freeze the header row and the first column
-    worksheet.freeze_panes(1, 1)
+# Define SSID columns
+ssid_columns = ['2.4 SSIDs', '5 SSIDs', '6 SSIDs']
 
 
 def create_surveyed_ap_list(self):
@@ -113,9 +69,6 @@ def create_surveyed_ap_list(self):
     # Create a pandas dataframe and export to Excel
     df = pd.DataFrame(surveyed_ap_list)
 
-    # Define SSID columns
-    ssid_columns = ['2.4 SSIDs', '5 SSIDs', '6 SSIDs']
-
     # Helper function to clean SSID Series
     def clean_ssids(series):
         return (
@@ -139,6 +92,15 @@ def create_surveyed_ap_list(self):
     all_ssids = pd.concat([ssids_24, ssids_5, ssids_6]).drop_duplicates().sort_values(by='SSID')
     all_ssids = all_ssids.reset_index(drop=True)
 
+    map_note_df = None
+
+    # Check if pictureNotes.json exists
+    picture_notes_json = load_json(project_dir, 'pictureNotes.json', message_callback)
+
+    if picture_notes_json is not None:
+        map_notes = flatten_picture_notes_hierarchical(picture_notes_json, notes_dict, floor_plans_dict)
+        map_note_df = pd.DataFrame(map_notes)
+
     # Create directory to hold output
     output_dir = self.working_directory / 'OUTPUT'
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -146,17 +108,39 @@ def create_surveyed_ap_list(self):
     output_filename = output_dir / f'{self.project_name} - Surveyed AP List.xlsx'
 
     try:
+        sheet_name = 'Surveyed AP List'
         writer = pd.ExcelWriter(str(output_filename), engine='xlsxwriter')
         # Sheet 1: Surveyed AP List
-        df.to_excel(writer, sheet_name='AP List', index=False)
-        adjust_column_widths(df, writer)
-        format_headers(df, writer)
+        df.to_excel(writer, sheet_name=sheet_name, index=False)
+        adjust_column_widths(df, writer, sheet_name, right_align_cols, narrow_fixed_width_cols, wide_fixed_width_cols)
+        format_headers(df, writer, sheet_name, freeze_row=True, freeze_col=True)
 
         # Separate SSID Sheets
-        ssids_24.to_excel(writer, sheet_name='2.4GHz SSIDs', index=False)
+        sheet_name = '2.4GHz SSIDs'
+        ssids_24.to_excel(writer, sheet_name=sheet_name, index=False)
+        adjust_column_widths(ssids_24, writer, sheet_name)
+        format_headers(ssids_24, writer, sheet_name)
+
+        sheet_name = '5GHz SSIDs'
         ssids_5.to_excel(writer, sheet_name='5GHz SSIDs', index=False)
+        adjust_column_widths(ssids_5, writer, sheet_name)
+        format_headers(ssids_5, writer, sheet_name)
+
+        sheet_name = '6GHz SSIDs'
         ssids_6.to_excel(writer, sheet_name='6GHz SSIDs', index=False)
+        adjust_column_widths(ssids_6, writer, sheet_name)
+        format_headers(ssids_6, writer, sheet_name)
+
+        sheet_name = 'All SSIDs'
         all_ssids.to_excel(writer, sheet_name='All SSIDs', index=False)
+        adjust_column_widths(all_ssids, writer, sheet_name)
+        format_headers(all_ssids, writer, sheet_name)
+
+        if map_note_df is not None and not map_note_df.empty:
+            sheet_name = 'Map Notes'
+            map_note_df.to_excel(writer, sheet_name=sheet_name, index=False)
+            adjust_column_widths(map_note_df, writer, sheet_name)
+            format_headers(map_note_df, writer, sheet_name)
 
         writer.close()
         message_callback(f'{nl}"{output_filename.name}" created successfully{nl}{nl}### PROCESS COMPLETE ###')

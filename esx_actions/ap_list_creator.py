@@ -61,14 +61,16 @@ def create_ap_list(project_object):
 
     try:
         with pd.ExcelWriter(Path(project_object.working_directory / output_filename), engine='xlsxwriter') as writer:
-            ap_df.to_excel(writer, sheet_name='AP List', index=False)
-            adjust_column_widths(ap_df, writer, 'AP List')
-            format_headers(ap_df, writer, 'AP List')
+            sheet_name = 'AP List'
+            ap_df.to_excel(writer, sheet_name=sheet_name, index=False)
+            adjust_column_widths(ap_df, writer, sheet_name)
+            format_headers(ap_df, writer, sheet_name)
 
             if map_note_df is not None and not map_note_df.empty:
-                map_note_df.to_excel(writer, sheet_name='Map Notes', index=False)
-                adjust_column_widths(map_note_df, writer, 'Map Notes')
-                format_headers(map_note_df, writer, 'Map Notes')
+                sheet_name = 'Map Notes'
+                map_note_df.to_excel(writer, sheet_name=sheet_name, index=False)
+                adjust_column_widths(map_note_df, writer, sheet_name)
+                format_headers(map_note_df, writer, sheet_name)
 
         message_callback(f'{nl}"{Path(output_filename).name}" created successfully{nl}{nl}### PROCESS COMPLETE ###')
 
