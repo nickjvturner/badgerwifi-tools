@@ -60,7 +60,8 @@ def export_ap_images(project_object):
                     for note in notes_json['notes']:
 
                         # Skip notes that do not contain images
-                        if len(note['imageIds']) > 0:
+                        # imageIds exists and is a non-empty list
+                        if 'imageIds' in note and note['imageIds']:
 
                             # Check if the note id matches the current AP note id
                             if note['id'] == ap_note:
